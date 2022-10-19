@@ -5,13 +5,7 @@
 // motorsRight          motor_group   3, 4            
 // Controller1          controller                    
 // ---- END VEXCODE CONFIGURED DEVICES ----
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// motorsLeft           motor_group   1, 2            
-// motorsRight          motor_group   3, 4            
-// Controller1          controller                    
-// ---- END VEXCODE CONFIGURED DEVICES ----
+
 /*----------------------------------------------------------------------------*/
 /*                                                                            */
 /*    Module:       main.cpp                                                  */
@@ -21,13 +15,6 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-// ---- START VEXCODE CONFIGURED DEVICES ----
-// Robot Configuration:
-// [Name]               [Type]        [Port(s)]
-// motorsLeft           motor_group   1, 2            
-// motorsRight          motor_group   3, 4            
-// Controller1          controller                    
-// ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
 
