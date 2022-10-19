@@ -34,6 +34,12 @@ int main() {
   Controller1.Axis4.changed(axis4);
 }
 
+
+// *experimental changes
+// motorsLeft are controlled by the left joystick
+// motorsRight are now controlled by right joystick
+
+
 //left and right on right joystick
 void axis1(){
   // //variable "pos" is position of joystick
