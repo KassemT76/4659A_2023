@@ -28,17 +28,17 @@ motorsRight = MotorGroup(motor3, motor4)
 #TESTING PRINT
 Brain.screen.print("Program Loaded!")
 
-#IS CALLED WHEN AXIS2 IS CHANGED
+#IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
 def axisChanged2():
     #DEFINE POSITION OF CONTROLLER JOYSTICK
     pos = Controller1.axis1.position()
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
-        motorsLeft.spin(REVERSE)
+        motorsRight.spin(REVERSE)
     else:
-        motorsLeft.spin(FORWARD)
+        motorsRight.spin(FORWARD)
 
-#IS CALLED WHEN AXIS2 IS CHANGED
+#IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def axisChanged3():
     pos = Controller1.axis3.position()
 
