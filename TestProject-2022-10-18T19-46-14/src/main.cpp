@@ -36,27 +36,27 @@ int main() {
 
 //left and right on right joystick
 void axis1(){
-  //variable "pos" is position of joystick
-  float pos = Controller1.Axis1.position(percent);
+  // //variable "pos" is position of joystick
+  // float pos = Controller1.Axis1.position(percent);
 
-  //pos < 0 is left
-  if (pos < 0){
-    //turns the robot left
-    motorsLeft.spin(reverse);
-    motorsRight.spin(forward);
-    motorsLeft.setVelocity(pos, percent);
-    motorsRight.setVelocity(pos, percent);
-  }
-  //if it isnt (pos < 0)turn right
-  else{
-    motorsLeft.spin(forward);
-    motorsRight.spin(reverse);
-    motorsLeft.setVelocity(pos, percent);
-    motorsRight.setVelocity(pos, percent);
-  }
-  Brain.Screen.clearLine();
-  Brain.Screen.print("A1: ");
-  Brain.Screen.print(pos); 
+  // //pos < 0 is left
+  // if (pos < 0){
+  //   //turns the robot left
+  //   motorsLeft.spin(reverse);
+  //   motorsRight.spin(forward);
+  //   motorsLeft.setVelocity(pos, percent);
+  //   motorsRight.setVelocity(pos, percent);
+  // }
+  // //if it isnt (pos < 0)turn right
+  // else{
+  //   motorsLeft.spin(forward);
+  //   motorsRight.spin(reverse);
+  //   motorsLeft.setVelocity(pos, percent);
+  //   motorsRight.setVelocity(pos, percent);
+  // }
+  // Brain.Screen.clearLine();
+  // Brain.Screen.print("A1: ");
+  // Brain.Screen.print(pos); 
   
   
 }
@@ -67,55 +67,63 @@ void axis2(){
   Brain.Screen.clearLine();
   Brain.Screen.print("A2: ");
   Brain.Screen.print(pos); 
-  
-  
+
+  if (pos < 0)
+  {
+    motorsRight.spin(reverse);
+    motorsRight.setVelocity(pos, percent);
+  }
+  else 
+  {
+    motorsRight.spin(forward);
+    motorsRight.setVelocity(pos, percent);
+  }
 }
 
 //up and down on left joy
+
+//
 void axis3(){
   float pos = Controller1.Axis3.position(percent);
 
   if (pos < 0){
     motorsLeft.spin(reverse);
-    motorsRight.spin(reverse);
+    // motorsRight.spin(reverse);
     motorsLeft.setVelocity(pos, percent);
-    motorsRight.setVelocity(pos, percent);
+    // motorsRight.setVelocity(pos, percent);
   }
   else {
     motorsLeft.spin(forward);
-    motorsRight.spin(forward);
+    // motorsRight.spin(forward);
     motorsLeft.setVelocity(pos, percent);
-    motorsRight.setVelocity(pos, percent);
+    // motorsRight.setVelocity(pos, percent);
   }
 
   Brain.Screen.clearLine();
   Brain.Screen.print("A3: ");
   Brain.Screen.print(pos); 
-  
-  
-  
 }
 
 //right and left left joy
 void axis4(){
-  float pos = Controller1.Axis4.position(percent);
+  // float pos = Controller1.Axis4.position(percent);
 
-  //when he turns left you turn left
-  if (pos > 0){
-    motorsRight.stop();
-    motorsLeft.spin(forward);
-    motorsLeft.setVelocity(pos, percent);
-  }
-  else{
-    motorsLeft.stop();
-    motorsRight.spin(forward);
-    motorsRight.setVelocity(pos, percent);
+  // //when he turns left you turn left
+  // if (pos > 0){
+  //   motorsRight.stop();
+  //   motorsLeft.spin(forward);
+  //   motorsLeft.setVelocity(pos, percent);
+  // }
+  // else{
+  //   motorsLeft.stop();
+  //   motorsRight.spin(forward);
+  //   motorsRight.setVelocity(pos, percent);
 
-  }
+  // }
 
-  Brain.Screen.clearLine();
-  Brain.Screen.print("A4: ");
-  Brain.Screen.print(pos); 
+  // Brain.Screen.clearLine();
+  // Brain.Screen.print("A4: ");
+  // Brain.Screen.print(pos); 
   
   //commit test lol
 
