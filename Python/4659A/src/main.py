@@ -8,39 +8,45 @@
 # ---------------------------------------------------------------------------- #
 
 # Library imports
-from audioop import reverse
-import struct
-from turtle import forward
 from vex import *
 
 # Brain should be defined by default
 Brain=Brain()
+
+#DEFINING CONTROLLERS AND MOTORS
 Controller1 = Controller()
+#NUMBER IN BRACKETS IS PORT
 motor1 = Motor(1)
 motor2 = Motor(2)
 motor3 = Motor(3)
 motor4 = Motor(4)
 
+#ASSIGNING THE MOTORS TO THE CORRECT GROUPS
 motorsLeft = MotorGroup(motor1, motor2)
 motorsRight = MotorGroup(motor3, motor4)
 
-Brain.screen.print("Hello V5")
+#TESTING PRINT
+Brain.screen.print("Program Loaded!")
 
+#IS CALLED WHEN AXIS2 IS CHANGED
 def axisChanged2():
+    #DEFINE POSITION OF CONTROLLER JOYSTICK
     pos = Controller1.axis1.position()
+    #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
-        motorsLeft.spin(reverse)
-        motorsLeft.set_velocity(pos)
+        motorsLeft.spin(REVERSE)
     else:
-        motorsLeft.spin(forward)
-    print(pos)
+        motorsLeft.spin(FORWARD)
 
+#IS CALLED WHEN AXIS2 IS CHANGED
 def axisChanged3():
     pos = Controller1.axis3.position()
-    print(pos)
 
+#LISTENS FOR A CHANGE IN JOYSTICKS
 Controller1.axis2.changed(axisChanged2)
 Controller1.axis3.changed(axisChanged3)
+
+#old code to convert to python
 
 # void axis2(){
 #   float pos = Controller1.Axis2.position(percent);
