@@ -4,9 +4,9 @@
 		"json": 1
 	},
 	"project": {
-		"name": "4659A",
-		"description": "Main project for 4659A code for the Spin Up! Vex Robotics Competition 2022-2023",
-		"creationDate": "2022-10-19, 3:46:18 p.m.",
+		"name": "4659",
+		"description": "4659A'S CODE",
+		"creationDate": "2022-10-20, 11:36:19 a.m.",
 		"platform": "V5",
 		"language": "python",
 		"slot": 2,
