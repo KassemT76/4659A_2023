@@ -16,10 +16,10 @@ brain=Brain()
 #DEFINING CONTROLLERS AND MOTORS
 Controller1 = Controller()
 #NUMBER IN BRACKETS IS PORT
-motor1 = Motor(4)
-motor2 = Motor(5)
-motor3 = Motor(10)
-motor4 = Motor(9)
+motor1 = Motor(Ports.PORT4, GearSetting.RATIO_6_1)
+motor2 = Motor(Ports.PORT5, GearSetting.RATIO_6_1)
+motor3 = Motor(Ports.PORT10, GearSetting.RATIO_6_1)
+motor4 = Motor(Ports.PORT9, GearSetting.RATIO_6_1)
 
 #ASSIGNING THE MOTORS TO THE CORRECT GROUPS
 motorsLeft = MotorGroup(motor1, motor2)
@@ -47,14 +47,13 @@ def axisChanged3():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos1 < 0:
         motorsLeft.spin(REVERSE)
-        motorsLeft.set_velocity(pos1, PERCENT)
+        motorsLeft.set_velocity(-pos1, PERCENT)
         brain.screen.print("Moving reverse left")
     else:
         motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity(pos1, PERCENT)
+        motorsLeft.set_velocity(-pos1, PERCENT)
 
 #LISTENS FOR A CHANGE IN JOYSTICKS
-Controller1.axis3.changed(axisChanged3)
-
 Controller1.axis2.changed(axisChanged2)
+Controller1.axis3.changed(axisChanged3)
 
