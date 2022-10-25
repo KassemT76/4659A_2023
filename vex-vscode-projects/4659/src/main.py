@@ -53,6 +53,16 @@ def axisChanged3():
         motorsLeft.spin(FORWARD)
         motorsLeft.set_velocity(-pos1, PERCENT)
 
+# def auto():
+#         motorsLeft.spin_for(forward, 100)
+
+# def driver():
+#     Controller1.axis2.changed(axisChanged2)
+#     Controller1.axis3.changed(axisChanged3)
+    
+# comp = Competition(driver, auto)
+
+
 #LISTENS FOR A CHANGE IN JOYSTICKS
 Controller1.axis2.changed(axisChanged2)
 Controller1.axis3.changed(axisChanged3)
