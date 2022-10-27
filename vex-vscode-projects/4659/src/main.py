@@ -53,8 +53,9 @@ def axisChanged3():
         motorsLeft.spin(FORWARD)
         motorsLeft.set_velocity(-pos1, PERCENT)
 
-# def auto():
-#         motorsLeft.spin_for(forward, 100)
+def autonum():
+         motorsLeft.spin_for(FORWARD, 1000, wait = False)
+         motorsRight.spin_for(FORWARD, 1000,wait = False)
 
 # def driver():
 #     Controller1.axis2.changed(axisChanged2)
@@ -66,5 +67,6 @@ def axisChanged3():
 #LISTENS FOR A CHANGE IN JOYSTICKS
 Controller1.axis2.changed(axisChanged2)
 Controller1.axis3.changed(axisChanged3)
+Controller1.buttonA.pressed(autonum)
 
 #Joseph was here
