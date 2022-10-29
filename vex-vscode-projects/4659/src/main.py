@@ -35,10 +35,14 @@ def axisChanged2():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         motorsRight.spin(REVERSE)
-        motorsRight.set_velocity(pos, PERCENT)
+        #this should hopefully make the input less sensitive
+        if pos % 4 == 0:
+            motorsRight.set_velocity(pos, PERCENT)
     else:
         motorsRight.spin(FORWARD)
-        motorsRight.set_velocity(pos, PERCENT)
+        #this should hopefully make the input less sensitive
+        if pos % 4 == 0: 
+            motorsRight.set_velocity(pos, PERCENT)
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def axisChanged3():
