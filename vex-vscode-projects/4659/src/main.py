@@ -16,10 +16,10 @@ brain=Brain()
 #DEFINING CONTROLLERS AND MOTORS
 Controller1 = Controller()
 #NUMBER IN BRACKETS IS PORT
-motor1 = Motor(Ports.PORT4, GearSetting.RATIO_6_1)
-motor2 = Motor(Ports.PORT5, GearSetting.RATIO_6_1)
-motor3 = Motor(Ports.PORT10, GearSetting.RATIO_6_1)
-motor4 = Motor(Ports.PORT9, GearSetting.RATIO_6_1)
+motor1 = Motor(Ports.PORT2, GearSetting.RATIO_6_1)
+motor2 = Motor(Ports.PORT3, GearSetting.RATIO_6_1)
+motor3 = Motor(Ports.PORT7, GearSetting.RATIO_6_1)
+motor4 = Motor(Ports.PORT8, GearSetting.RATIO_6_1)
 
 #ASSIGNING THE MOTORS TO THE CORRECT GROUPS
 motorsLeft = MotorGroup(motor1, motor2)
@@ -35,13 +35,11 @@ def axisChanged2():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         motorsRight.spin(REVERSE)
-        #this should hopefully make the input less sensitive
-        if pos % 4 == 0:
+        if (pos%4)==0:
             motorsRight.set_velocity(pos, PERCENT)
     else:
         motorsRight.spin(FORWARD)
-        #this should hopefully make the input less sensitive
-        if pos % 4 == 0: 
+        if (pos%4)==0:
             motorsRight.set_velocity(pos, PERCENT)
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
@@ -51,13 +49,12 @@ def axisChanged3():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos1 < 0:
         motorsLeft.spin(REVERSE)
-        if pos1 % 4 == 0:
-            motorsLeft.set_velocity(pos1, PERCENT)
-        brain.screen.print("Moving reverse left")
+        if (pos1 % 4) == 0:
+            motorsLeft.set_velocity(-pos1, PERCENT)
     else:
         motorsLeft.spin(FORWARD)
-        if pos1 % 4 == 0:
-            motorsLeft.set_velocity(pos1, PERCENT)
+        if (pos1 % 4) == 0:
+            motorsLeft.set_velocity(-pos1, PERCENT)
 
 def autonum():
          motorsLeft.spin_for(FORWARD, 1000, DEGREES, 100, RPM, wait = False)
