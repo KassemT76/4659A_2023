@@ -51,22 +51,17 @@ def axisChanged3():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos1 < 0:
         motorsLeft.spin(REVERSE)
-        motorsLeft.set_velocity(-pos1, PERCENT)
+        if pos1 % 4 == 0:
+            motorsLeft.set_velocity(pos1, PERCENT)
         brain.screen.print("Moving reverse left")
     else:
         motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity(-pos1, PERCENT)
+        if pos1 % 4 == 0:
+            motorsLeft.set_velocity(pos1, PERCENT)
 
 def autonum():
-         motorsLeft.spin_for(FORWARD, 1000, wait = False)
-         motorsRight.spin_for(FORWARD, 1000,wait = False)
-
-# def driver():
-#     Controller1.axis2.changed(axisChanged2)
-#     Controller1.axis3.changed(axisChanged3)
-    
-# comp = Competition(driver, auto)
-
+         motorsLeft.spin_for(FORWARD, 1000, DEGREES, 100, RPM, wait = False)
+         motorsRight.spin_for(FORWARD, 1000, DEGREES, 100, RPM, wait = False)
 
 #LISTENS FOR A CHANGE IN JOYSTICKS
 Controller1.axis2.changed(axisChanged2)
