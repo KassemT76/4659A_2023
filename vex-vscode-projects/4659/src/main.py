@@ -35,10 +35,14 @@ def axisChanged2():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         motorsRight.spin(REVERSE)
-        motorsRight.set_velocity(pos, PERCENT)
+        #this should hopefully make the input less sensitive
+        if pos % 4 == 0:
+            motorsRight.set_velocity(pos, PERCENT)
     else:
         motorsRight.spin(FORWARD)
-        motorsRight.set_velocity(pos, PERCENT)
+        #this should hopefully make the input less sensitive
+        if pos % 4 == 0: 
+            motorsRight.set_velocity(pos, PERCENT)
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def axisChanged3():
@@ -47,24 +51,21 @@ def axisChanged3():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos1 < 0:
         motorsLeft.spin(REVERSE)
-        motorsLeft.set_velocity(-pos1, PERCENT)
+        if pos1 % 4 == 0:
+            motorsLeft.set_velocity(pos1, PERCENT)
         brain.screen.print("Moving reverse left")
     else:
         motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity(-pos1, PERCENT)
+        if pos1 % 4 == 0:
+            motorsLeft.set_velocity(pos1, PERCENT)
 
-# def auto():
-#         motorsLeft.spin_for(forward, 100)
-
-# def driver():
-#     Controller1.axis2.changed(axisChanged2)
-#     Controller1.axis3.changed(axisChanged3)
-    
-# comp = Competition(driver, auto)
-
+def autonum():
+         motorsLeft.spin_for(FORWARD, 1000, DEGREES, 100, RPM, wait = False)
+         motorsRight.spin_for(FORWARD, 1000, DEGREES, 100, RPM, wait = False)
 
 #LISTENS FOR A CHANGE IN JOYSTICKS
 Controller1.axis2.changed(axisChanged2)
 Controller1.axis3.changed(axisChanged3)
+Controller1.buttonA.pressed(autonum)
 
 #Joseph was here
