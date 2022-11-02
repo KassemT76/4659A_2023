@@ -15,11 +15,13 @@ brain=Brain()
 
 #DEFINING CONTROLLERS AND MOTORS
 Controller1 = Controller()
+
 #INITIALIZING MOTORS
 motor1 = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
 motor2 = Motor(Ports.PORT3, GearSetting.RATIO_6_1, True)
 motor3 = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
 motor4 = Motor(Ports.PORT8, GearSetting.RATIO_6_1, False)
+
 
 #ASSIGNING THE MOTORS TO THE CORRECT GROUPS
 motorsLeft = MotorGroup(motor1, motor2)
@@ -48,7 +50,7 @@ def moveMRight():
     brain.screen.set_cursor(2,0)
     brain.screen.clear_row()
     brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", motorsRight.velocity() )
-    
+   
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def moveMLeft():
@@ -74,7 +76,6 @@ def driver():
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonA.pressed(autonum)
     wait(5, MSEC)
-
 
 def autonum():
          motorsLeft.spin_for(FORWARD, 360, DEGREES, 300, RPM, wait = False)
