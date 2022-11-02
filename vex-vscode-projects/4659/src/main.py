@@ -47,7 +47,8 @@ def moveMRight():
     #PRINTS INFO
     brain.screen.set_cursor(2,0)
     brain.screen.clear_row()
-    brain.screen.print("Axis 2 Changed: ", Controller1.axis2.position())
+    brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", motorsRight.velocity() )
+    
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def moveMLeft():
@@ -64,7 +65,7 @@ def moveMLeft():
     #PRINTS INFO
     brain.screen.set_cursor(3,0)
     brain.screen.clear_row()
-    brain.screen.print("Axis 3 Changed: ", Controller1.axis3.position())
+    brain.screen.print("Axis 3 Changed: ", Controller1.axis3.position(),"Velocity: ", motorsLeft.velocity())
 
 def driver():
     #LISTENS FOR A CHANGE IN JOYSTICKS
