@@ -33,6 +33,25 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+setSpeed = 2
+
+
+def changeSpeedDown():
+    global setSpeed
+    if setSpeed > 1:
+        setSpeed -= 0.5
+        Controller1.screen.clear_row(1)
+        Controller1.screen.set_cursor(1,0)
+        Controller1.screen.print("Speed",setSpeed)
+
+def changeSpeedUp():
+    global setSpeed
+    if setSpeed < 4:
+        setSpeed += 0.5
+        Controller1.screen.clear_row(1)
+        Controller1.screen.print("Speed",setSpeed)
+
+
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
 def moveMRight():
     #DEFINE POSITION OF CONTROLLER JOYSTICK
@@ -40,10 +59,10 @@ def moveMRight():
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         motorsRight.spin(REVERSE)
-        motorsRight.set_velocity(pos, PERCENT)
+        motorsRight.set_velocity((pos/4)*setSpeed, PERCENT)
     else:
         motorsRight.spin(FORWARD)
-        motorsRight.set_velocity(pos, PERCENT)
+        motorsRight.set_velocity((pos/4)*setSpeed, PERCENT)
     #PRINTS INFO
     brain.screen.set_cursor(2,0)
     brain.screen.clear_row()
@@ -52,15 +71,17 @@ def moveMRight():
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def moveMLeft():
+    global setSpeed
     #DEFINE POSITION OF CONTROLLER JOYSTICK
     pos1 = Controller1.axis3.position()
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if (pos1 < 0):
         motorsLeft.spin(REVERSE)
-        motorsLeft.set_velocity(pos1, PERCENT)
+        #if pos1%4 == 0
+        motorsLeft.set_velocity(pos1/setSpeed, PERCENT)
     elif (pos1 >= 0):
         motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity(pos1, PERCENT)
+        motorsLeft.set_velocity(pos1/setSpeed, PERCENT)
 
     #PRINTS INFO
     brain.screen.set_cursor(3,0)
@@ -73,6 +94,8 @@ def driver():
     Controller1.axis3.changed(moveMLeft)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonA.pressed(autonum)
+    Controller1.buttonDown.pressed(changeSpeedDown)
+    Controller1.buttonUp.pressed(changeSpeedUp)  # type: ignore
     wait(5, MSEC)
 
 
