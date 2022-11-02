@@ -77,7 +77,7 @@ def driver():
 
 
 def autonum():
-         motorsLeft.spin_for(REVERSE, 360, DEGREES, 300, RPM, wait = False)
+         motorsLeft.spin_for(FORWARD, 360, DEGREES, 300, RPM, wait = False)
          motorsRight.spin_for(FORWARD, 360, DEGREES, 300, RPM, wait = False)
 
 #INITIALIZING COMPETITION MODE
