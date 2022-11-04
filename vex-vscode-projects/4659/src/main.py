@@ -29,7 +29,6 @@ motorsRight = MotorGroup(motor3, motor4)
 
 #TESTING PRINT
 brain.screen.print("Program Loaded!")
-Thread.sleep_for(1000, MSEC)
 #INFORMATION HEADER
 brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
@@ -40,18 +39,22 @@ setSpeed = 2
 
 def changeSpeedDown():
     global setSpeed
-    if setSpeed > 1:
-        setSpeed -= 0.5
-        Controller1.screen.clear_row(1)
-        Controller1.screen.set_cursor(1,0)
-        Controller1.screen.print("Speed",setSpeed)
+    setSpeed = 2
+    Controller1.screen.clear_row(1)
+    Controller1.screen.set_cursor(1,0)
+    Controller1.screen.print("Speed",setSpeed)
 
+def changeSpeedN():
+    global setSpeed
+    setSpeed = 3
+    Controller1.screen.clear_row(1)
+    Controller1.screen.print("Speed",setSpeed)
+    
 def changeSpeedUp():
     global setSpeed
-    if setSpeed < 4:
-        setSpeed += 0.5
-        Controller1.screen.clear_row(1)
-        Controller1.screen.print("Speed",setSpeed)
+    setSpeed = 4
+    Controller1.screen.clear_row(1)
+    Controller1.screen.print("Speed",setSpeed)
 
 
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
@@ -80,10 +83,10 @@ def moveMLeft():
     if (pos1 < 0):
         motorsLeft.spin(REVERSE)
         #if pos1%4 == 0
-        motorsLeft.set_velocity(pos1/setSpeed, PERCENT)
+        motorsLeft.set_velocity((pos1/4)*setSpeed, PERCENT)
     elif (pos1 >= 0):
         motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity(pos1/setSpeed, PERCENT)
+        motorsLeft.set_velocity((pos1/4)*setSpeed, PERCENT)
 
     #PRINTS INFO
     brain.screen.set_cursor(3,0)
@@ -96,8 +99,10 @@ def driver():
     Controller1.axis3.changed(moveMLeft)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonA.pressed(autonum)
+    #ARROW BUTTONS TO CHANGE SPEED
     Controller1.buttonDown.pressed(changeSpeedDown)
-    Controller1.buttonUp.pressed(changeSpeedUp)  # type: ignore
+    Controller1.buttonUp.pressed(changeSpeedUp)  
+    Controller1.buttonRight.pressed(changeSpeedN)
     wait(5, MSEC)
 
 def autonum():
