@@ -29,12 +29,13 @@ RRMotor        = vex.Motor(vex.Ports.PORT20, vex.GearSetting.RATIO_36_1 , False 
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 
-#DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
+#DO NOT TOUCH U CAN DESTROY HARDWARE If you think there is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
 startUp      = False #False is flywheel startup not complete, True is complete
 Shutdown     = False #Used for shutting down flywheel
 startUpRPM   = 580
 internalRPM  = 0
 RPMIncrement = 10
+RPMDelay     = 2   #delay in seconds
 
 #Motor Grouping---------------------------------------------------#
 LHDrive  = vex.MotorGroup(LFMotor, LRMotor)
@@ -65,9 +66,22 @@ def flywheelControl(RPM):
         while internalRPM <= startUpRPM:
             Flywheel.set_velocity(internalRPM, vex.VelocityUnits.RPM)
             internalRPM = internalRPM + RPMIncrement
+            vex.wait(RPMDelay, vex.SECONDS)
         startUp = True
-            
 
+    if Shutdown == True:      #Turn off flywheel
+        global Shutdown
+        Flywheel.set_velocity((Flywheel.velocity(vex.VelocityUnits.RPM)), vex.VelocityUnits.RPM)
+        internalRPM = Flywheel.velocity(vex.VelocityUnits.RPM)
+        while internalRPM > 0:
+            Flywheel.set_velocity(internalRPM, vex.VelocityUnits.RPM)
+            internalRPM = internalRPM - RPMIncrement
+            vex.wait(RPMDelay, vex.SECONDS)
+        
+    if startUp == True and Shutdown == False:
+        
+            
+    
     
 
 
