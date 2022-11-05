@@ -46,8 +46,8 @@ Flywheel = vex.MotorGroup(Flywheel1, Flywheel2)
 
 #Figure out actual flywheel rpm
 def flywheelRPM():
-    GavinWasHere = Flywheel.velocity(vex.VelocityUnits.RPM) * 6
-    return(GavinWasHere)
+    Kassemsayshewantsavariableinthiscodenamedafterhim = Flywheel.velocity(vex.VelocityUnits.RPM) * 6
+    return(Kassemsayshewantsavariableinthiscodenamedafterhim)
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
@@ -79,23 +79,6 @@ def flywheelControl(RPM):
             vex.wait(RPMDelay, vex.SECONDS)
         
     if startUp == True and Shutdown == False:
-        
-            
-    
-    
-
-
-
-
-
-    
-
-
-
-
-
-
-def compStart():
-   intakeControl()
+        print("Pid goes here")
 
 
