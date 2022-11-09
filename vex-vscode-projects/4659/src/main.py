@@ -8,35 +8,79 @@
 # ---------------------------------------------------------------------------- #
 
 # Library imports
-from vex import *
+from vex import * 
+import sys
 
-# Brain should be defined by default
-brain=Brain()
+#Config----------------------------------------------------#
+brain          = Brain()
+Controller1    = Controller()
 
-#DEFINING CONTROLLERS AND MOTORS
-Controller1 = Controller()
+Flywheel1      = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
+Flywheel2      = Motor(Ports.PORT12, GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
+Intake         = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , True  )    #Not Finalized  
+Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
+LFMotor        = Motor(Ports.PORT15, GearSetting.RATIO_36_1 , True )
+LRMotor        = Motor(Ports.PORT18, GearSetting.RATIO_36_1 , True )
+RFMotor        = Motor(Ports.PORT11, GearSetting.RATIO_36_1 , False  )
+RRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , False )
 
-#INITIALIZING MOTORS
-motor1 = Motor(Ports.PORT2, GearSetting.RATIO_6_1, True)
-motor2 = Motor(Ports.PORT3, GearSetting.RATIO_6_1, True)
-motor3 = Motor(Ports.PORT7, GearSetting.RATIO_6_1, False)
-motor4 = Motor(Ports.PORT8, GearSetting.RATIO_6_1, False)
+p1 = Pneumatics(brain.three_wire_port.h)
+
+#Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
+intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
+flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
+
+#DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
+startUp      = False #False is flywheel startup not complete, True is complete
+Shutdown     = False #Used for shutting down flywheel
+startUpRPM   = 580
+internalRPM  = 0
+RPMIncrement = 10
+setSpeed = 2
+
+#Motor Grouping---------------------------------------------------#
 
 
-#ASSIGNING THE MOTORS TO THE CORRECT GROUPS
-motorsLeft = MotorGroup(motor1, motor2)
-motorsRight = MotorGroup(motor3, motor4)
+RHDrive  = MotorGroup(RFMotor, RRMotor)
+LHDrive  = MotorGroup(LFMotor, LRMotor)
+Flywheel = MotorGroup(Flywheel1, Flywheel2)
 
-#TESTING PRINT
+#First print
 brain.screen.print("Program Loaded!")
-#INFORMATION HEADER
+#Information header
 brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
-setSpeed = 2
+#Low Level Services----------------------------------------------#
 
+#Figure out actual flywheel rpm
+def flywheelRPM():
+    GavinWasHere = Flywheel.velocity(VelocityUnits.RPM) * 6
+    return(GavinWasHere)
 
+#Threading-------------------------------------------------------#
+def intakeControl():  #This is a intake control thread
+    while True:
+        if intakeStatus == True:
+            Intake.set_velocity(100, PERCENT)
+
+        else: 
+            Intake.set_velocity(0  , PERCENT)
+
+def flywheelControl(RPM):
+    global startUp
+    if startUp == False:      #Turn on flywheel
+        Flywheel.set_velocity((Flywheel.velocity(VelocityUnits.RPM)), VelocityUnits.RPM)
+        internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+        while internalRPM <= startUpRPM:
+            Flywheel.set_velocity(internalRPM, VelocityUnits.RPM)
+            internalRPM = internalRPM + RPMIncrement
+        startUp = True
+
+#Driving Controls------------------------------------------------------------------#
+
+#Speed Settings-------------------------------------------#
 def changeSpeedDown():
     global setSpeed
     setSpeed = 2
@@ -56,42 +100,63 @@ def changeSpeedUp():
     Controller1.screen.clear_row(1)
     Controller1.screen.print("Speed",setSpeed)
 
-
+#Moving the motors----------------------------------------#
+ppos = 1
+ppos2 = 1
+ppos3 = 1
+ppos4 =1
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
 def moveMRight():
+    global ppos
+    global ppos2
     #DEFINE POSITION OF CONTROLLER JOYSTICK
     pos = Controller1.axis2.position()
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
-        motorsRight.spin(REVERSE)
-        motorsRight.set_velocity((pos/4)*setSpeed, PERCENT)
+        RHDrive.spin(REVERSE)
+        if pos < ppos:
+            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
+        ppos = int(pos/10+0.99)*10
+    elif pos > 0:
+        RHDrive.spin(FORWARD)
+        if pos > ppos2:
+            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
+        ppos2 = int(pos/10+0.99)*10
     else:
-        motorsRight.spin(FORWARD)
-        motorsRight.set_velocity((pos/4)*setSpeed, PERCENT)
+        RHDrive.set_velocity(0, PERCENT)
     #PRINTS INFO
-    brain.screen.set_cursor(2,0)
+    brain.screen.set_cursor(4,0)
     brain.screen.clear_row()
-    brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", motorsRight.velocity() )
+    brain.screen.print("Axis 2: ", Controller1.axis2.position())
    
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def moveMLeft():
-    global setSpeed
+    global ppos3
+    global ppos4
     #DEFINE POSITION OF CONTROLLER JOYSTICK
     pos1 = Controller1.axis3.position()
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
-    if (pos1 < 0):
-        motorsLeft.spin(REVERSE)
-        #if pos1%4 == 0
-        motorsLeft.set_velocity((pos1/4)*setSpeed, PERCENT)
-    elif (pos1 >= 0):
-        motorsLeft.spin(FORWARD)
-        motorsLeft.set_velocity((pos1/4)*setSpeed, PERCENT)
-
+    if pos1 < 0:
+        LHDrive.spin(REVERSE)
+        if pos1 < ppos3:
+            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
+        
+    elif pos1 > 0:
+        LHDrive.spin(FORWARD)
+        if pos1 > ppos4:
+            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
+    else:
+        LHDrive.set_velocity(0, PERCENT)
+    ppos3 = int(pos1/10+0.99)*10
+    ppos4 = int(pos1/10+0.99)*10
     #PRINTS INFO
     brain.screen.set_cursor(3,0)
     brain.screen.clear_row()
-    brain.screen.print("Axis 3 Changed: ", Controller1.axis3.position(),"Velocity: ", motorsLeft.velocity())
+    brain.screen.print("Axis 3 Changed: ", Controller1.axis3.position(),"Velocity: ", LHDrive.velocity())
+
+
+#Competition Templating----------------------------------------------------------------------------------#
 
 def driver():
     #LISTENS FOR A CHANGE IN JOYSTICKS
@@ -103,11 +168,17 @@ def driver():
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
     Controller1.buttonRight.pressed(changeSpeedN)
-    wait(5, MSEC)
+
+    brain.screen.set_cursor(5,0)
+    brain.screen.clear_line()
+    brain.screen.print("Velocity right", RHDrive.velocity())
+    wait(5)
+
 
 def autonum():
-         motorsLeft.spin_for(FORWARD, 360, DEGREES, 300, RPM, wait = False)
-         motorsRight.spin_for(FORWARD, 360, DEGREES, 300, RPM, wait = False)
+        p1.open()
+        wait(500, MSEC)
+        p1.close()
 
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
