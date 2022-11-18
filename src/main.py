@@ -8,25 +8,24 @@
 # ---------------------------------------------------------------------------- #
 
 # Library Imports
-import vex
+from vex import *
 import sys
-import numpy as np
 
 #Config----------------------------------------------------#
-brain          = vex.Brain()
+brain          = Brain()
 
-Flywheel1      = vex.Motor(vex.Ports.PORT11, vex.GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
-Flywheel2      = vex.Motor(vex.Ports.PORT12, vex.GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
-Intake         = vex.Motor(vex.Ports.PORT13, vex.GearSetting.RATIO_36_1 , True  )    #Not Finalized  
-Rollers        = vex.Motor(vex.Ports.PORT21, vex.GearSetting.RATIO_18_1 , False )    #Not Finalized
-LFMotor        = vex.Motor(vex.Ports.PORT15, vex.GearSetting.RATIO_36_1 , False )
-LRMotor        = vex.Motor(vex.Ports.PORT18, vex.GearSetting.RATIO_36_1 , False )
-RFMotor        = vex.Motor(vex.Ports.PORT19, vex.GearSetting.RATIO_36_1 , True  )
-RRMotor        = vex.Motor(vex.Ports.PORT20, vex.GearSetting.RATIO_36_1 , False )
+Flywheel       = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
+Intake         = Motor(Ports.PORT13, GearSetting.RATIO_6_1  , True  )    #Gear ratio finalized
+Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
+LFMotor        = Motor(Ports.PORT15, GearSetting.RATIO_36_1 , False )
+LRMotor        = Motor(Ports.PORT18, GearSetting.RATIO_36_1 , False )
+RFMotor        = Motor(Ports.PORT19, GearSetting.RATIO_36_1 , True  )
+RRMotor        = Motor(Ports.PORT20, GearSetting.RATIO_36_1 , False )
 
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
+intakeRPM    = 600
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think there is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
@@ -34,51 +33,61 @@ startUp      = False #False is flywheel startup not complete, True is complete
 Shutdown     = False #Used for shutting down flywheel
 startUpRPM   = 580
 internalRPM  = 0
-RPMIncrement = 10
-RPMDelay     = 2   #delay in seconds
+RPMIncrement = 1                            #tune for startup/shutdown speed
+RPMDelay     = 0.025   #delay in seconds          tune for startup/shutdown speed
 
 #Motor Grouping---------------------------------------------------#
-LHDrive  = vex.MotorGroup(LFMotor, LRMotor)
-RHDrive  = vex.MotorGroup(RFMotor, RRMotor)
-Flywheel = vex.MotorGroup(Flywheel1, Flywheel2)
+LHDrive  = MotorGroup(LFMotor, LRMotor)
+RHDrive  = MotorGroup(RFMotor, RRMotor)
 
 #Low Level Services----------------------------------------------#
 
 #Figure out actual flywheel rpm
 def flywheelRPM():
-    Kassemsayshewantsavariableinthiscodenamedafterhim = Flywheel.velocity(vex.VelocityUnits.RPM) * 6
+    Kassemsayshewantsavariableinthiscodenamedafterhim = Flywheel.velocity(VelocityUnits.RPM) * 6
     return(Kassemsayshewantsavariableinthiscodenamedafterhim)
+
+def flywheelStartup():
+    Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM <= startUpRPM:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM + RPMIncrement
+        wait(RPMDelay, SECONDS)
+    startUp = True
+
+def flywheelShutdown():
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM > 0:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM - RPMIncrement
+        wait(RPMDelay, SECONDS)
+    Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
+
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
     while True:
         if intakeStatus == True:
-            Intake.set_velocity(100, vex.PERCENT)
+            Intake.spin(FORWARD, intakeRPM, RPM)
 
         else: 
-            Intake.set_velocity(0  , vex.PERCENT)
+            Intake.spin(FORWARD, 0  , RPM)
 
 def flywheelControl(RPM):
-    if startUp == False:      #Turn on flywheel
-        global startUp
-        Flywheel.set_velocity((Flywheel.velocity(vex.VelocityUnits.RPM)), vex.VelocityUnits.RPM)
-        internalRPM = Flywheel.velocity(vex.VelocityUnits.RPM)
-        while internalRPM <= startUpRPM:
-            Flywheel.set_velocity(internalRPM, vex.VelocityUnits.RPM)
-            internalRPM = internalRPM + RPMIncrement
-            vex.wait(RPMDelay, vex.SECONDS)
-        startUp = True
-
-    if Shutdown == True:      #Turn off flywheel
-        global Shutdown
-        Flywheel.set_velocity((Flywheel.velocity(vex.VelocityUnits.RPM)), vex.VelocityUnits.RPM)
-        internalRPM = Flywheel.velocity(vex.VelocityUnits.RPM)
-        while internalRPM > 0:
-            Flywheel.set_velocity(internalRPM, vex.VelocityUnits.RPM)
-            internalRPM = internalRPM - RPMIncrement
-            vex.wait(RPMDelay, vex.SECONDS)
-        
     if startUp == True and Shutdown == False:
         print("Pid goes here")
+
+
+
+
+
+
+#test procedure
+
+flywheelStartup()
+print('lol')
+wait(5, SECONDS)
+flywheelShutdown()
 
 
