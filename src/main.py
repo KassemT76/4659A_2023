@@ -15,7 +15,6 @@ import sys
 brain          = Brain()
 
 Flywheel       = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
-Intake         = Motor(Ports.PORT13, GearSetting.RATIO_6_1  , True  )    #Gear ratio finalized
 LFMotor        = Motor(Ports.PORT15, GearSetting.RATIO_36_1 , False )
 LRMotor        = Motor(Ports.PORT18, GearSetting.RATIO_36_1 , False )
 RFMotor        = Motor(Ports.PORT19, GearSetting.RATIO_36_1 , True  )

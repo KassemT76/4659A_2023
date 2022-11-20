@@ -11,13 +11,13 @@ intakeRPM    = 600     #Speed the intake spins at
 wallDistance = 10
 rollerWheelDiameter = 4 #diameter in inches
 
-
+Intake         = Motor(Ports.PORT13, GearSetting.RATIO_6_1  , True  )
 
 
 #Temp for testing
 brain          = Brain()
 Controller1    = Controller()
-Intake         = Motor(Ports.PORT13, GearSetting.RATIO_6_1  , True  )
+
 
 
 def intakeControl():  #Intake/Indexer control           (Write  actual roller spinney code
