@@ -16,7 +16,6 @@ brain          = Brain()
 
 Flywheel       = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
 Intake         = Motor(Ports.PORT13, GearSetting.RATIO_6_1  , True  )    #Gear ratio finalized
-Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
 LFMotor        = Motor(Ports.PORT15, GearSetting.RATIO_36_1 , False )
 LRMotor        = Motor(Ports.PORT18, GearSetting.RATIO_36_1 , False )
 RFMotor        = Motor(Ports.PORT19, GearSetting.RATIO_36_1 , True  )
@@ -24,8 +23,6 @@ RRMotor        = Motor(Ports.PORT20, GearSetting.RATIO_36_1 , False )
 
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
-intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
-intakeRPM    = 600
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think there is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
@@ -66,13 +63,6 @@ def flywheelShutdown():
 
 
 #Threading-------------------------------------------------------#
-def intakeControl():  #This is a intake control thread
-    while True:
-        if intakeStatus == True:
-            Intake.spin(FORWARD, intakeRPM, RPM)
-
-        else: 
-            Intake.spin(FORWARD, 0  , RPM)
 
 def flywheelControl(RPM):
     if startUp == True and Shutdown == False:
