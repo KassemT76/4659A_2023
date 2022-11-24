@@ -26,6 +26,16 @@ RRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , False )
 
 p1 = Pneumatics(brain.three_wire_port.h)
 
+sig1 = Signature(1, 421, 827, 624, -3723, -3233, -3478, 2.800, 0)
+
+v1 = Vision(Ports.PORT20, 50, sig1)
+
+
+encL = Encoder(brain.three_wire_port.a)
+encL2 = Encoder(brain.three_wire_port.b)
+encR = Encoder(brain.three_wire_port.c)
+encR2 = Encoder(brain.three_wire_port.d)
+
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
@@ -52,7 +62,16 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+encL.reset_position()
+encL2.reset_position()
+encR.reset_position()
+encR2.reset_position()
+
 #Low Level Services----------------------------------------------#
+
+#Find distance travelled from encoder
+def findDistance(encoder):
+    Encoder.value
 
 #Figure out actual flywheel rpm
 def flywheelRPM():
@@ -163,7 +182,7 @@ def driver():
     Controller1.axis2.changed(moveMRight)
     Controller1.axis3.changed(moveMLeft)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
-    Controller1.buttonA.pressed(autonum)
+    Controller1.buttonA.pressed(otometry)
     #ARROW BUTTONS TO CHANGE SPEED
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
@@ -175,13 +194,15 @@ def driver():
     wait(5)
 
 
-def autonum():
-        p1.open()
-        wait(500, MSEC)
-        p1.close()
+def otometry():
+    brain.screen.print(encL.value())
 
+def autonum():
+    x = 1
+        
+        
 #INITIALIZING COMPETITION MODE
-comp = Competition(driver, autonum)
+comp = Competition(driver, otometry)
 
 
     
