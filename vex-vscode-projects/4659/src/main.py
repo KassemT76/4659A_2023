@@ -62,6 +62,8 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+# Calibration ---------------------------------------------------#
+
 encL.reset_position()
 encL2.reset_position()
 encR.reset_position()
@@ -195,7 +197,10 @@ def driver():
 
 
 def otometry():
-    brain.screen.print(encL.value())
+    distance_per_rotation = 23.9389360204 # Measurement in CENTIMETERS
+    brain.screen.print(encL.value() / 360 * distance_per_rotation)
+    #brain.screen.print(encL.value())
+
 
 def autonum():
     x = 1
