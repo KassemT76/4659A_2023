@@ -197,9 +197,14 @@ def driver():
 
 
 def otometry():
-    distance_per_rotation = 23.9389360204 # Measurement in CENTIMETERS
-    brain.screen.print(encL.value() / 360 * distance_per_rotation)
-    #brain.screen.print(encL.value())
+    distance_per_rotation = 11 # Measurement in INCHES
+    distance_per_degree = distance_per_rotation / 360
+    while True:
+        brain.screen.set_cursor(8,0)
+        brain.screen.clear_line()
+        brain.screen.print(encL.value()/360 * distance_per_rotation)
+        #brain.screen.print(encL.value())
+        wait(5)
 
 
 def autonum():
@@ -211,3 +216,4 @@ comp = Competition(driver, otometry)
 
 
     
+# Hi
