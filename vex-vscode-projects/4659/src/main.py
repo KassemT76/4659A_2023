@@ -199,7 +199,10 @@ def odometry():
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
     brain.screen.print("Right Encoder: ", d_right)
-    wait(500)
+    brain.screen.set_cursor(10,0)
+    brain.screen.clear_line()
+    brain.screen.print("Y-Position: ", position[1])
+    wait(15)
 
 
 
@@ -228,8 +231,11 @@ def autonum():
     while True:
         odometry()
         if position[1] < 10:
-            LHDrive.spin(FORWARD, 200, RPM)
-            RHDrive.spin(FORWARD, 200, RPM)
+            LHDrive.spin(FORWARD, 10, RPM)
+            RHDrive.spin(FORWARD, 10, RPM)
+        else:
+            LHDrive.stop()
+            RHDrive.stop()
 
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
