@@ -8,7 +8,8 @@
 # ---------------------------------------------------------------------------- #
 
 # Library imports
-from vex import * 
+from vex import *
+import math 
 import sys
 
 #Config----------------------------------------------------#
@@ -44,6 +45,11 @@ startUpRPM   = 580
 internalRPM  = 0
 RPMIncrement = 10
 setSpeed = 2
+
+#Changable globals
+team = 0 # 0 for RED, 1 for BLUE
+position = [0.0, 0.0]
+orientation = 90 # Value in degrees (90 = facing forwards)
 
 #Motor Grouping---------------------------------------------------#
 
@@ -174,20 +180,32 @@ def moveMLeft():
     brain.screen.print("Axis 3: ", Controller1.axis3.position())
 
 def odometry():
-    posx = 0
-    posy = 0
+    global position
+    global orientation
     
-    distance_per_rotation = 25.93 # Measurement in CENTIMETERS
-    while True:
-        brain.screen.set_cursor(8,0)
-        brain.screen.clear_line()
-        brain.screen.print("Left Encoder: ", encL.value()/360 * distance_per_rotation)
-        brain.screen.set_cursor(9,0)
-        brain.screen.clear_line()
-        brain.screen.print("Right Encoder: ", encR.value()/360 * distance_per_rotation)
-        wait(500)
+    distance_per_rotation = 10.21 # Measurement in INCHES
+
+    d_left = encL.value()/360 * distance_per_rotation
+    d_right = encR.value()/360 * distance_per_rotation
+    d_average = (d_left + d_right) / 2
+
+    position[0] = math.cos(orientation) * d_average
+    position[1] = math.sin(orientation) * d_average
+
+    # PRINT VALUES
+    brain.screen.set_cursor(8,0)
+    brain.screen.clear_line()
+    brain.screen.print("Left Encoder: ", d_left)
+    brain.screen.set_cursor(9,0)
+    brain.screen.clear_line()
+    brain.screen.print("Right Encoder: ", d_right)
+    wait(500)
+
+
 
 def roller():
+    global team
+    
     x = opticSens.color()    
     brain.screen.print(x)
     if x == Color.RED:
@@ -207,7 +225,11 @@ def driver():
     odometry()
 
 def autonum():
-    odometry()
-                
+    while True:
+        odometry()
+        if position[1] < 10:
+            LHDrive.spin(FORWARD, 200, RPM)
+            RHDrive.spin(FORWARD, 200, RPM)
+
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
