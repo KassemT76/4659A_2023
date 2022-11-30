@@ -19,22 +19,19 @@ Flywheel1      = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not
 Flywheel2      = Motor(Ports.PORT12, GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
 Intake         = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , True  )    #Not Finalized  
 Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
-LFMotor        = Motor(Ports.PORT15, GearSetting.RATIO_36_1 , True )
-LRMotor        = Motor(Ports.PORT18, GearSetting.RATIO_36_1 , True )
-RFMotor        = Motor(Ports.PORT11, GearSetting.RATIO_36_1 , False  )
-RRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , False )
+LFMotor        = Motor(Ports.PORT11, GearSetting.RATIO_36_1 , True )
+LRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , True )
+RFMotor        = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , False  )
+RRMotor        = Motor(Ports.PORT14, GearSetting.RATIO_36_1 , False )
 
 p1 = Pneumatics(brain.three_wire_port.h)
 
-sig1 = Signature(1, 421, 827, 624, -3723, -3233, -3478, 2.800, 0)
+opticSens = Optical(Ports.PORT1)
 
-v1 = Vision(Ports.PORT20, 50, sig1)
-
-
-encL = Encoder(brain.three_wire_port.a)
-encL2 = Encoder(brain.three_wire_port.b)
-encR = Encoder(brain.three_wire_port.c)
-encR2 = Encoder(brain.three_wire_port.d)
+encL = Encoder(brain.three_wire_port.c)
+encL2 = Encoder(brain.three_wire_port.d)
+encR = Encoder(brain.three_wire_port.a)
+encR2 = Encoder(brain.three_wire_port.b)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
@@ -174,46 +171,43 @@ def moveMLeft():
     #PRINTS INFO
     brain.screen.set_cursor(3,0)
     brain.screen.clear_row()
-    brain.screen.print("Axis 3 Changed: ", Controller1.axis3.position(),"Velocity: ", LHDrive.velocity())
+    brain.screen.print("Axis 3: ", Controller1.axis3.position())
 
+def odometry():
+    posx = 0
+    posy = 0
+    
+    distance_per_rotation = 25.93 # Measurement in CENTIMETERS
+    while True:
+        brain.screen.set_cursor(8,0)
+        brain.screen.clear_line()
+        brain.screen.print("Left Encoder: ", encL.value()/360 * distance_per_rotation)
+        brain.screen.set_cursor(9,0)
+        brain.screen.clear_line()
+        brain.screen.print("Right Encoder: ", encR.value()/360 * distance_per_rotation)
+        wait(500)
 
+def roller():
+    x = opticSens.color()    
+    brain.screen.print(x)
+    if x == Color.RED:
+        brain.screen.print("ajsjds")
 #Competition Templating----------------------------------------------------------------------------------#
 
 def driver():
     #LISTENS FOR A CHANGE IN JOYSTICKS
     Controller1.axis2.changed(moveMRight)
     Controller1.axis3.changed(moveMLeft)
-    #BUTTON TO TEST AUTONUM IN DRIVE MODE
-    Controller1.buttonA.pressed(otometry)
     #ARROW BUTTONS TO CHANGE SPEED
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
     Controller1.buttonRight.pressed(changeSpeedN)
-
-    brain.screen.set_cursor(5,0)
-    brain.screen.clear_line()
-    brain.screen.print("Velocity right", RHDrive.velocity())
-    wait(5)
-
-
-def otometry():
-    distance_per_rotation = 11 # Measurement in INCHES
-    distance_per_degree = distance_per_rotation / 360
-    while True:
-        brain.screen.set_cursor(8,0)
-        brain.screen.clear_line()
-        brain.screen.print(encL.value()/360 * distance_per_rotation)
-        #brain.screen.print(encL.value())
-        wait(5)
-
+    #BUTTON TO TEST AUTONUM IN DRIVE MODE
+    Controller1.buttonB.pressed(roller)
+    odometry()
 
 def autonum():
-    x = 1
-        
-        
+    odometry()
+                
 #INITIALIZING COMPETITION MODE
-comp = Competition(driver, otometry)
-
-
-    
-# Hi
+comp = Competition(driver, autonum)
