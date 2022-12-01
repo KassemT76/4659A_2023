@@ -33,6 +33,8 @@ encL = Encoder(brain.three_wire_port.c)
 encL2 = Encoder(brain.three_wire_port.d)
 encR = Encoder(brain.three_wire_port.a)
 encR2 = Encoder(brain.three_wire_port.b)
+encM = Encoder(brain.three_wire_port.e)
+encM2 = Encoder(brain.three_wire_port.f)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
@@ -196,10 +198,17 @@ def odometry():
     brain.screen.set_cursor(8,0)
     brain.screen.clear_line()
     brain.screen.print("Left Encoder: ", d_left)
+
+
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
     brain.screen.print("Right Encoder: ", d_right)
+
     brain.screen.set_cursor(10,0)
+    brain.screen.clear_line()
+    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
+    
+    brain.screen.set_cursor(11,0)
     brain.screen.clear_line()
     brain.screen.print("Y-Position: ", position[1])
     wait(15)
@@ -225,14 +234,15 @@ def driver():
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
-    odometry()
+    odometry() 
 
 def autonum():
     while True:
         odometry()
         if position[1] < 10:
-            LHDrive.spin(FORWARD, 10, RPM)
-            RHDrive.spin(FORWARD, 10, RPM)
+            #LHDrive.spin(FORWARD, 10, RPM)
+            #RHDrive.spin(FORWARD, 10, RPM)
+            pass
         else:
             LHDrive.stop()
             RHDrive.stop()
