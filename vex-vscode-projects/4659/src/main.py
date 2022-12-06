@@ -204,6 +204,9 @@ def odometry():
     brain.screen.print("Y-Position: ", position[1])
     wait(15)
 
+def testFunction():
+    LHDrive.spin_for(FORWARD, 360, DEGREES)
+    RHDrive.spin_for(REVERSE, 360, DEGREES)
 
 
 def roller():
@@ -224,7 +227,7 @@ def driver():
     Controller1.buttonUp.pressed(changeSpeedUp)  
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
-    Controller1.buttonB.pressed(roller)
+    Controller1.buttonB.pressed(testFunction)
     odometry()
 
 def autonum():
