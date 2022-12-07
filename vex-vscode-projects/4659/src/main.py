@@ -26,10 +26,10 @@ Flywheel1      = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not
 Flywheel2      = Motor(Ports.PORT12, GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
 Intake         = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , True  )    #Not Finalized  
 Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
-LFMotor        = Motor(Ports.PORT11, GearSetting.RATIO_36_1 , True )
-LRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , True )
-RFMotor        = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , False  )
-RRMotor        = Motor(Ports.PORT14, GearSetting.RATIO_36_1 , False )
+LFMotor        = Motor(Ports.PORT1, GearSetting.RATIO_36_1 , True )
+LRMotor        = Motor(Ports.PORT2, GearSetting.RATIO_36_1 , True )
+RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
+RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
 p1 = Pneumatics(brain.three_wire_port.h)
 
@@ -91,6 +91,7 @@ def odometry():
     global position
     global orientation
     
+    # FIND DISTANCE TRAVELLED
     distance_per_rotation = 10.21 # Measurement in INCHES
 
     d_left = encL.value()/360 * distance_per_rotation
@@ -100,11 +101,16 @@ def odometry():
     position[0] = math.cos(orientation) * d_average
     position[1] = math.sin(orientation) * d_average
 
+    #CALCULATE ORIENTATION
+    back_tracking_distance = 9.81 # INCHES
+    horizontal_tracking_distance = 3.6 # INCHES
+    angle = (encL.value() - encR.value()) / (2 * horizontal_tracking_distance) # RADIANS
+
+
     # PRINT ENCODER VALUES
     brain.screen.set_cursor(8,0)
     brain.screen.clear_line()
     brain.screen.print("Left Encoder: ", d_left)
-
 
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
@@ -117,6 +123,11 @@ def odometry():
     brain.screen.set_cursor(11,0)
     brain.screen.clear_line()
     brain.screen.print("Y-Position: ", position[1])
+
+    brain.screen.set_cursor(12,0)
+    brain.screen.clear_line()
+    brain.screen.print("Orientation: ", (angle * 180 / 3.14159))
+
     wait(15)
 
 #Figure out actual flywheel rpm
@@ -294,12 +305,12 @@ def driver():
 def autonum():
     while True:
         odometry()
-        if position[1] < 10:
-            LHDrive.spin(FORWARD, 10, RPM)
-            RHDrive.spin(FORWARD, 10, RPM)
-        else:
-            LHDrive.stop()
-            RHDrive.stop()
+    if position[1] < 10:
+        LHDrive.spin(FORWARD, 10, RPM)
+        RHDrive.spin(FORWARD, 10, RPM)
+    else:
+        LHDrive.stop()
+        RHDrive.stop()
             
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
