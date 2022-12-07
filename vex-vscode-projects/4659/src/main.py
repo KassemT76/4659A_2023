@@ -95,7 +95,7 @@ def odometry():
     distance_per_rotation = 10.21 # Measurement in INCHES
 
     d_left = encL.value()/360 * distance_per_rotation
-    d_right = encR.value()/360 * distance_per_rotation
+    d_right = encR.value()/360 * distance_per_rotation * -1
     d_average = (d_left + d_right) / 2
 
     position[0] = math.cos(orientation) * d_average
@@ -103,8 +103,8 @@ def odometry():
 
     #CALCULATE ORIENTATION
     back_tracking_distance = 9.81 # INCHES
-    horizontal_tracking_distance = 3.6 # INCHES
-    angle = (encL.value() - encR.value()) / (2 * horizontal_tracking_distance) # RADIANS
+    horizontal_tracking_distance = 3.53 # INCHES
+    angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
 
 
     # PRINT ENCODER VALUES
