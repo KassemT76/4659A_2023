@@ -12,7 +12,14 @@ from vex import *
 import math 
 import sys
 
-#Config----------------------------------------------------#
+# CONFIGURATION ------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -Variable Definitions
+#   -Calibration
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 brain          = Brain()
 Controller1    = Controller()
 
@@ -49,7 +56,7 @@ RPMIncrement = 10
 setSpeed = 2
 
 #Changable globals
-team = 0 # 0 for RED, 1 for BLUE
+team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
 position = [0.0, 0.0]
 orientation = 90 # Value in degrees (90 = facing forwards)
 
@@ -60,6 +67,8 @@ RHDrive  = MotorGroup(RFMotor, RRMotor)
 LHDrive  = MotorGroup(LFMotor, LRMotor)
 Flywheel = MotorGroup(Flywheel1, Flywheel2)
 
+# Calibration ---------------------------------------------------#
+
 #First print
 brain.screen.print("Program Loaded!")
 #Information header
@@ -67,18 +76,53 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
-# Calibration ---------------------------------------------------#
+def pre_autonum():  
+    encL.reset_position()
+    encL2.reset_position()
+    encR.reset_position()
+    encR2.reset_position()
 
-encL.reset_position()
-encL2.reset_position()
-encR.reset_position()
-encR2.reset_position()
-
-#Low Level Services----------------------------------------------#
+# Low Level Services ------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -Odometry
+#   -PID controls
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 #Find distance travelled from encoder
-def findDistance(encoder):
-    Encoder.value
+def odometry():
+    global position
+    global orientation
+    
+    distance_per_rotation = 10.21 # Measurement in INCHES
+
+    d_left = encL.value()/360 * distance_per_rotation
+    d_right = encR.value()/360 * distance_per_rotation
+    d_average = (d_left + d_right) / 2
+
+    position[0] = math.cos(orientation) * d_average
+    position[1] = math.sin(orientation) * d_average
+
+    # PRINT ENCODER VALUES
+    brain.screen.set_cursor(8,0)
+    brain.screen.clear_line()
+    brain.screen.print("Left Encoder: ", d_left)
+
+
+    brain.screen.set_cursor(9,0)
+    brain.screen.clear_line()
+    brain.screen.print("Right Encoder: ", d_right)
+
+    brain.screen.set_cursor(10,0)
+    brain.screen.clear_line()
+    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
+    
+    brain.screen.set_cursor(11,0)
+    brain.screen.clear_line()
+    brain.screen.print("Y-Position: ", position[1])
+    wait(15)
 
 #Figure out actual flywheel rpm
 def flywheelRPM():
@@ -104,7 +148,14 @@ def flywheelControl(RPM):
             internalRPM = internalRPM + RPMIncrement
         startUp = True
 
-#Driving Controls------------------------------------------------------------------#
+# #Driving Controls------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -SPEED CONTROLS
+#   -MOTOR MOVEMENT
+#   -TEST FUNCTION
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 #Speed Settings-------------------------------------------#
 def changeSpeedDown():
@@ -181,51 +232,43 @@ def moveMLeft():
     brain.screen.clear_row()
     brain.screen.print("Axis 3: ", Controller1.axis3.position())
 
-def odometry():
-    global position
-    global orientation
-    
-    distance_per_rotation = 10.21 # Measurement in INCHES
-
-    d_left = encL.value()/360 * distance_per_rotation
-    d_right = encR.value()/360 * distance_per_rotation
-    d_average = (d_left + d_right) / 2
-
-    position[0] = math.cos(orientation) * d_average
-    position[1] = math.sin(orientation) * d_average
-
-    # PRINT VALUES
-    brain.screen.set_cursor(8,0)
-    brain.screen.clear_line()
-    brain.screen.print("Left Encoder: ", d_left)
-
-
-    brain.screen.set_cursor(9,0)
-    brain.screen.clear_line()
-    brain.screen.print("Right Encoder: ", d_right)
-
-    brain.screen.set_cursor(10,0)
-    brain.screen.clear_line()
-    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
-    
-    brain.screen.set_cursor(11,0)
-    brain.screen.clear_line()
-    brain.screen.print("Y-Position: ", position[1])
-    wait(15)
-
 def testFunction():
-    LHDrive.spin_for(FORWARD, 360, DEGREES)
-    RHDrive.spin_for(REVERSE, 360, DEGREES)
+    LHDrive.spin_for(FORWARD, 360, DEGREES, 10, RPM, wait=False)
+    RHDrive.spin_for(REVERSE, 360, DEGREES, 10, RPM)
 
-
+# #Autonum Controls------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -ROLLER MOVEMENT
+# 
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def roller():
     global team
-    
-    x = opticSens.color()    
-    brain.screen.print(x)
-    if x == Color.RED:
-        brain.screen.print("ajsjds")
-#Competition Templating----------------------------------------------------------------------------------#
+    x = 0
+
+    Rollers.spin(FORWARD, 100, RPM)
+    while x != 1:
+        opticColor = opticSens.color() 
+        brain.screen.set_cursor(12,0)
+        brain.screen.clear_line()
+        brain.screen.print("Color ", opticColor)
+        if opticColor == team:
+            Rollers.stop()
+            x=1 
+        wait(50)
+        
+# Competition Templates Controls------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -DRIVER TEMPLATE
+#   -AUTONUM TEMPLATE
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+pre_autonum()
 
 def driver():
     #LISTENS FOR A CHANGE IN JOYSTICKS
@@ -236,13 +279,11 @@ def driver():
     Controller1.buttonUp.pressed(changeSpeedUp)  
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
-<<<<<<< HEAD
-    Controller1.buttonB.pressed(testFunction)
-    odometry()
-=======
     Controller1.buttonB.pressed(roller)
-    odometry() 
->>>>>>> 0d44fdadddb530d9a49b137b7ccf666988a8a8e9
+    #turn on odometry
+    while True:
+        odometry()
+        wait(15) 
 
 def autonum():
     while True:
