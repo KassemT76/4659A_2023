@@ -10,7 +10,6 @@
 # Library imports
 from vex import *
 import math 
-import sys
 
 # CONFIGURATION ------------------------------------------------------------------#
 #
