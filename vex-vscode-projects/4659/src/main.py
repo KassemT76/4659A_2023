@@ -129,6 +129,7 @@ def intakeControl():  #This is a intake control thread
     while True:
         if intakeStatus == True:
             Intake.set_velocity(100, PERCENT)
+
         else: 
             Intake.set_velocity(0  , PERCENT)
 
@@ -299,6 +300,5 @@ def autonum():
         else:
             LHDrive.stop()
             RHDrive.stop()
-
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
