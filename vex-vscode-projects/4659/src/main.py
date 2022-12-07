@@ -103,7 +103,7 @@ def odometry():
 
     #CALCULATE ORIENTATION
     back_tracking_distance = 9.81 # INCHES
-    horizontal_tracking_distance = 3.53 # INCHES
+    horizontal_tracking_distance = 3.535 # INCHES
     angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
 
 
