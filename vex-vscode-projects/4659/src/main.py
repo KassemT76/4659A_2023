@@ -52,6 +52,7 @@ Shutdown     = False #Used for shutting down flywheel
 startUpRPM   = 580
 internalRPM  = 0
 RPMIncrement = 10
+RPMDelay     = 0.025   #delay in seconds          tune for startup/shutdown speed
 setSpeed = 2
 
 #Changable globals
@@ -119,29 +120,33 @@ def odometry():
     brain.screen.print("Y-Position: ", position[1])
     wait(15)
 
-#Figure out actual flywheel rpm
 def flywheelRPM():
-    GavinWasHere = Flywheel.velocity(VelocityUnits.RPM) * 6
-    return(GavinWasHere)
+    iLoveFlywheels = Flywheel.velocity(VelocityUnits.RPM) * 6
+    return(iLoveFlywheels)
+
+def flywheelStartup():
+    Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM <= startUpRPM:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM + RPMIncrement
+        wait(RPMDelay, SECONDS)
+    startUp = True
+
+def flywheelShutdown():
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM > 0:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM - RPMIncrement
+        wait(RPMDelay, SECONDS)
+    Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
 
 #Threading-------------------------------------------------------#
-def intakeControl():  #This is a intake control thread
-    while True:
-        if intakeStatus == True:
-            Intake.set_velocity(100, PERCENT)
-
-        else: 
-            Intake.set_velocity(0  , PERCENT)
 
 def flywheelControl(RPM):
-    global startUp
-    if startUp == False:      #Turn on flywheel
-        Flywheel.set_velocity((Flywheel.velocity(VelocityUnits.RPM)), VelocityUnits.RPM)
-        internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-        while internalRPM <= startUpRPM:
-            Flywheel.set_velocity(internalRPM, VelocityUnits.RPM)
-            internalRPM = internalRPM + RPMIncrement
-        startUp = True
+    if startUp == True and Shutdown == False:
+        print("Pid goes here")
+
 
 # #Driving Controls------------------------------------------------------------------#
 #
@@ -300,5 +305,6 @@ def autonum():
         else:
             LHDrive.stop()
             RHDrive.stop()
+            
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
