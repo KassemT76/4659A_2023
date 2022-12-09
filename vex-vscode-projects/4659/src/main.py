@@ -31,9 +31,9 @@ LRMotor        = Motor(Ports.PORT2, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-p1 = Pneumatics(brain.three_wire_port.h)
-
+SIG_1 = Signature(1, 6035, 7111, 6572, -1345, -475, -910, 3.000, 0)
 opticSens = Optical(Ports.PORT11)
+visionSens = Vision(Ports.PORT9, 50, SIG_1)
 
 encL = Encoder(brain.three_wire_port.c)
 encL2 = Encoder(brain.three_wire_port.d)
@@ -110,27 +110,25 @@ def odometry():
     position[1] = math.sin(angle * 180 / math.pi) * d_average
 
     # PRINT ENCODER VALUES
-    brain.screen.set_cursor(8,0)
+    brain.screen.set_cursor(2,0)
     brain.screen.clear_line()
     brain.screen.print("Left Encoder: ", d_left)
 
-    brain.screen.set_cursor(9,0)
+    brain.screen.set_cursor(3,0)
     brain.screen.clear_line()
     brain.screen.print("Right Encoder: ", d_right)
 
-    brain.screen.set_cursor(10,0)
+    brain.screen.set_cursor(4,0)
     brain.screen.clear_line()
     brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
     
-    brain.screen.set_cursor(11,0)
+    brain.screen.set_cursor(5,0)
     brain.screen.clear_line()
-    brain.screen.print("Y-Position: ", position[1])
+    brain.screen.print("Position: ", "X", position[0], "Y", position[1])
 
-    brain.screen.set_cursor(12,0)
+    brain.screen.set_cursor(6,0)
     brain.screen.clear_line()
     brain.screen.print("Orientation: ", (angle * 180 / math.pi))
-
-    wait(15)
 
 #Figure out actual flywheel rpm
 def flywheelRPM():
@@ -216,11 +214,11 @@ def moveMRight():
         RHDrive.spin(REVERSE)
         RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
     #PRINTS INFO
-    brain.screen.set_cursor(4,0)
+    brain.screen.set_cursor(7,0)
     brain.screen.clear_row()
 
     brain.screen.print("Axis 2: ", Controller1.axis2.position())
-    brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", RHDrive.velocity() )
+    brain.screen.print("Axis 2: ", Controller1.axis2.position())
 
    
 
@@ -246,7 +244,7 @@ def moveMLeft():
     ppos3 = int(pos1/10+0.99)*10
     ppos4 = int(pos1/10+0.99)*10
     #PRINTS INFO
-    brain.screen.set_cursor(3,0)
+    brain.screen.set_cursor(8,0)
     brain.screen.clear_row()
     brain.screen.print("Axis 3: ", Controller1.axis3.position())
 
@@ -259,7 +257,7 @@ def testFunction():
 #   INCLUDES
 #
 #   -ROLLER MOVEMENT
-# 
+#   -Vision sensors
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def roller():
@@ -269,7 +267,7 @@ def roller():
     if opticColor == opp_team:
         Rollers.spin(FORWARD, 100, RPM)   
 
-    brain.screen.set_cursor(12,0)
+    brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
     brain.screen.print("Color ", opticColor)
 
@@ -277,6 +275,26 @@ def roller():
         Rollers.stop()
 
     wait(50)
+
+def locator():
+    x = visionSens.take_snapshot(SIG_1)
+    if x != None:
+        brain.screen.set_cursor(10,0)
+        brain.screen.clear_line()
+        print(x[0].centerX)
+        if x[0].centerX < 130:
+            LHDrive.spin(REVERSE, 10)
+            RHDrive.spin(FORWARD, 10)
+            
+        elif x[0].centerX > 170:
+            LHDrive.spin(FORWARD, 10)
+            RHDrive.spin(REVERSE, 10)
+
+        else:
+            LHDrive.stop()
+            RHDrive.stop()
+
+        
         
 # Competition Templates Controls------------------------------------------------------------------#
 #
@@ -309,12 +327,10 @@ def driver():
 def autonum():
     while True:
         odometry()
-    if position[1] < 10:
-        LHDrive.spin(FORWARD, 10, RPM)
-        RHDrive.spin(FORWARD, 10, RPM)
-    else:
-        LHDrive.stop()
-        RHDrive.stop()
+        locator()
+
+
+        wait(50)
             
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
