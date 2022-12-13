@@ -22,10 +22,10 @@ import math
 brain          = Brain()
 Controller1    = Controller()
 
-Flywheel1      = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
-Flywheel2      = Motor(Ports.PORT12, GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
-Intake         = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , True  )    #Not Finalized  
-Rollers        = Motor(Ports.PORT12, GearSetting.RATIO_18_1 , False )    #Not Finalized
+Flywheel      = Motor(Ports.PORT7, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
+
+Intake         = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True  )    
+
 LFMotor        = Motor(Ports.PORT1, GearSetting.RATIO_36_1 , True )
 LRMotor        = Motor(Ports.PORT2, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
@@ -58,11 +58,11 @@ setSpeed = 2
 team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
 opp_team = Color.BLUE # 
 position = [0.0, 0.0]
+oldPos = 0
 
 #Motor Grouping---------------------------------------------------#
 RHDrive  = MotorGroup(RFMotor, RRMotor)
 LHDrive  = MotorGroup(LFMotor, LRMotor)
-Flywheel = MotorGroup(Flywheel1, Flywheel2)
 
 #First print
 brain.screen.print("Program Loaded!")
@@ -87,18 +87,33 @@ def pre_autonum():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 #Find distance travelled from encoder
+def findDistanceY(distance, angle):
+    global oldPos 
+    newPos = distance - oldPos
+
+    distance += newPos*math.sin(angle)
+
+    return distance
+
+
+def findDistanceX(distance, angle):
+    global oldPos 
+    newPos = distance - oldPos
+
+    distance += newPos*math.cos(angle)
+
+    return distance
+
+
 def odometry():
     global position
-    global orientation
     
     # FIND DISTANCE TRAVELLED
     distance_per_rotation = 10.21 # Measurement in INCHES
 
     d_left = encL.value()/360 * distance_per_rotation
-    d_right = encR.value()/360 * distance_per_rotation * -1
+    d_right = encR.value()/360 * distance_per_rotation
     d_average = (d_left + d_right) / 2
-
-    
 
     #CALCULATE ORIENTATION
     back_tracking_distance = 9.81 # INCHES
@@ -106,8 +121,10 @@ def odometry():
     angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
 
     #COORDINATES
-    position[0] = math.cos(angle * 180 / math.pi) * d_average
-    position[1] = math.sin(angle * 180 / math.pi) * d_average
+    position[0] = findDistanceX(d_average, angle)
+    position[1] = findDistanceY(d_average, angle)
+
+    #math.sin(angle * 180 / math.pi)
 
     # PRINT ENCODER VALUES
     brain.screen.set_cursor(2,0)
@@ -265,14 +282,14 @@ def roller():
     opticColor = opticSens.color() 
 
     if opticColor == opp_team:
-        Rollers.spin(FORWARD, 100, RPM)   
+        Intake.spin(FORWARD, 100, RPM)   
 
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
     brain.screen.print("Color ", opticColor)
 
     if opticColor == team:
-        Rollers.stop()
+        Intake.stop()
 
     wait(50)
 
