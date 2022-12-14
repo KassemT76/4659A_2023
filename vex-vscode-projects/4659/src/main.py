@@ -22,9 +22,9 @@ import math
 brain          = Brain()
 Controller1    = Controller()
 
-Flywheel      = Motor(Ports.PORT7, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
+Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
 
-Intake         = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True  )    
+Intake         = Motor(Ports.PORT8, GearSetting.RATIO_36_1 , False  )    
 
 LFMotor        = Motor(Ports.PORT1, GearSetting.RATIO_36_1 , True )
 LRMotor        = Motor(Ports.PORT2, GearSetting.RATIO_36_1 , True )
@@ -42,6 +42,8 @@ encR2 = Encoder(brain.three_wire_port.b)
 encM = Encoder(brain.three_wire_port.e)
 encM2 = Encoder(brain.three_wire_port.f)
 
+clutchPiston = Pneumatics(brain.three_wire_port.g)
+
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
@@ -53,12 +55,19 @@ startUpRPM   = 580
 internalRPM  = 0
 RPMIncrement = 10
 setSpeed = 2
+RPMDelay     = 0.025
 
 #Changable globals
 team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
 opp_team = Color.BLUE # 
 position = [0.0, 0.0]
+#Odometry
 oldPos = 0
+oldPos2 = 0
+#Intake
+intakeIncrement = 0
+#Flywheel
+clutchActivate = False
 
 #Motor Grouping---------------------------------------------------#
 RHDrive  = MotorGroup(RFMotor, RRMotor)
@@ -71,11 +80,43 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
-def pre_autonum():  
+def initialization():  
     encL.reset_position()
     encL2.reset_position()
     encR.reset_position()
     encR2.reset_position()
+
+def driver_initialization():
+    global startUp
+    global intakeStatus
+    
+    initialization()
+
+    startUp = False
+    flywheelStartup()
+
+    intakeStatus = True
+    intakeControl()
+    
+    
+def auton_inititialization():
+    global startUp
+    global intakeStatus
+    
+    initialization()
+
+    startUp = False
+    flywheelStartup()
+
+    intakeStatus = True
+    intakeControl()
+
+
+def shutDown():
+    LHDrive.stop()
+    RHDrive.stop()
+    Intake.stop()
+    flywheelShutdown()
 
 # Low Level Services ------------------------------------------------------------------#
 #
@@ -89,19 +130,21 @@ def pre_autonum():
 #Find distance travelled from encoder
 def findDistanceY(distance, angle):
     global oldPos 
+
     newPos = distance - oldPos
-
     distance += newPos*math.sin(angle)
-
+     
+    oldPos = distance
     return distance
 
 
 def findDistanceX(distance, angle):
-    global oldPos 
-    newPos = distance - oldPos
+    global oldPos2
+    newPos = distance - oldPos2
 
     distance += newPos*math.cos(angle)
 
+    oldPos2 = distance
     return distance
 
 
@@ -119,6 +162,7 @@ def odometry():
     back_tracking_distance = 9.81 # INCHES
     horizontal_tracking_distance = 3.535 # INCHES
     angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
+    # turning_radius = horizontal_tracking_distance*(d_left + d_right) / (d_right - d_left)
 
     #COORDINATES
     position[0] = findDistanceX(d_average, angle)
@@ -147,30 +191,32 @@ def odometry():
     brain.screen.clear_line()
     brain.screen.print("Orientation: ", (angle * 180 / math.pi))
 
-#Figure out actual flywheel rpm
-def flywheelRPM():
-    GavinWasHere = Flywheel.velocity(VelocityUnits.RPM) * 6
-    return(GavinWasHere)
-
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
-    while True:
-        if intakeStatus == True:
-            Intake.set_velocity(100, PERCENT)
+    global intakeStatus
 
-        else: 
-            Intake.set_velocity(0  , PERCENT)
+    if intakeStatus == True:
+        Intake.spin(FORWARD,100, RPM)
+    else:
+        Intake.stop()
 
-def flywheelControl(RPM):
-    global startUp
-    if startUp == False:      #Turn on flywheel
-        Flywheel.set_velocity((Flywheel.velocity(VelocityUnits.RPM)), VelocityUnits.RPM)
-        internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-        while internalRPM <= startUpRPM:
-            Flywheel.set_velocity(internalRPM, VelocityUnits.RPM)
-            internalRPM = internalRPM + RPMIncrement
-        startUp = True
 
+def flywheelStartup():
+    Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM <= startUpRPM:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM + RPMIncrement
+        wait(RPMDelay, SECONDS)
+    startUp = True
+
+def flywheelShutdown():
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    while internalRPM > 0:
+        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+        internalRPM = internalRPM - RPMIncrement
+        wait(RPMDelay, SECONDS)
+    Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
 # #Driving Controls------------------------------------------------------------------#
 #
 #   INCLUDES
@@ -277,6 +323,22 @@ def testFunction():
 #   -Vision sensors
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+def intakeButton():
+    global intakeStatus
+
+    intakeStatus = not(intakeStatus)
+    intakeControl()
+
+def flywheelShoot():
+    global clutchActivate
+
+    clutchActivate = not(clutchActivate)
+    if clutchActivate == True:
+
+        clutchPiston.open()
+    else: 
+        clutchPiston.close()
+    
 def roller():
     global team
     opticColor = opticSens.color() 
@@ -289,6 +351,7 @@ def roller():
     brain.screen.print("Color ", opticColor)
 
     if opticColor == team:
+        # CHANGE TO NOT INTERFERE WITH INDEXER
         Intake.stop()
 
     wait(50)
@@ -322,10 +385,11 @@ def locator():
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-pre_autonum()
+initialization()
 
 #Competition Templating----------------------------------------------------------------------------------#
 def driver():
+    driver_initialization()
     #LISTENS FOR A CHANGE IN JOYSTICKS
     Controller1.axis2.changed(moveMRight)
     Controller1.axis3.changed(moveMLeft)
@@ -335,19 +399,24 @@ def driver():
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
+    Controller1.buttonR1.pressed(intakeButton)
+    Controller1.buttonR2.pressed(flywheelShoot)
+
+    Controller1.buttonLeft.pressed(flywheelShutdown)
+
     #turn on odometry
     while True:
         odometry()
-        roller()
-        wait(15) 
+        wait(500)
 
 def autonum():
-    while True:
+    auton_inititialization()
+    while True:                                                                                                                                                                                                                              
         odometry()
         locator()
 
 
-        wait(50)
+        wait(500)
             
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
