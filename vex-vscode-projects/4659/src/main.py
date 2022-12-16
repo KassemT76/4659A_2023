@@ -62,8 +62,9 @@ team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
 opp_team = Color.BLUE # 
 position = [0.0, 0.0]
 #Odometry
-oldPos = 0
-oldPos2 = 0
+old_left = 0
+old_right = 0
+angle = 0
 #Intake
 intakeIncrement = 0
 #Flywheel
@@ -127,48 +128,49 @@ def shutDown():
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-#Find distance travelled from encoder
-def findDistanceY(distance, angle):
-    global oldPos 
-
-    newPos = distance - oldPos
-    distance += newPos*math.sin(angle)
-     
-    oldPos = distance
-    return distance
-
-
-def findDistanceX(distance, angle):
-    global oldPos2
-    newPos = distance - oldPos2
-
-    distance += newPos*math.cos(angle)
-
-    oldPos2 = distance
-    return distance
-
-
+#Find distance travelled
 def odometry():
-    global position
+    global position, angle, old_left, old_right
     
     # FIND DISTANCE TRAVELLED
     distance_per_rotation = 10.21 # Measurement in INCHES
-
-    d_left = encL.value()/360 * distance_per_rotation
-    d_right = encR.value()/360 * distance_per_rotation
-    d_average = (d_left + d_right) / 2
-
-    #CALCULATE ORIENTATION
     back_tracking_distance = 9.81 # INCHES
     horizontal_tracking_distance = 3.535 # INCHES
-    angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
-    # turning_radius = horizontal_tracking_distance*(d_left + d_right) / (d_right - d_left)
 
-    #COORDINATES
-    position[0] = findDistanceX(d_average, angle)
-    position[1] = findDistanceY(d_average, angle)
+    new_left = encL.value() 
+    new_right = encR.value() 
 
-    #math.sin(angle * 180 / math.pi)
+    d_left = ((new_left - old_left) * distance_per_rotation)/360
+    d_right = ((new_right - old_right) * distance_per_rotation)/360
+
+    
+    #CALCULATE ORIENTATION
+    d_angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
+
+
+    # if angle > math.pi/2 - 0.1 and angle < math.pi/2 + 0.1:
+    #     angle = math.pi/2
+    # elif angle > math.pi - 0.1 and angle < math.pi + 0.1:
+    #     angle = math.pi
+    # elif angle > math.pi*2 - 0.1 and angle < math.pi*2 + 0.1:
+    #     angle = math.pi*2
+    # elif angle > -0.1 and angle < 0.1:
+    #     angle = 0
+
+    if d_angle == 0:
+        position[0] += d_left * math.sin(angle)
+        position[0] += d_left * math.cos(angle)
+    else:
+        side_arc  = 2 * ((d_left/ d_angle) + horizontal_tracking_distance) * math.sin(d_angle / 2)
+        DeltaYSide = side_arc * math.cos(angle + (d_angle / 2))
+        DeltaXSide = side_arc * math.sin(angle + (d_angle / 2))
+        angle += d_angle
+        position[0] += DeltaXSide
+        position[1] += DeltaYSide
+
+    old_left = new_left
+    old_right = new_right
+    d_angle = 0
 
     # PRINT ENCODER VALUES
     brain.screen.set_cursor(2,0)
@@ -189,7 +191,7 @@ def odometry():
 
     brain.screen.set_cursor(6,0)
     brain.screen.clear_line()
-    brain.screen.print("Orientation: ", (angle * 180 / math.pi))
+    brain.screen.print("Orientation: ", angle)
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
@@ -281,7 +283,8 @@ def moveMRight():
     brain.screen.clear_row()
 
     brain.screen.print("Axis 2: ", Controller1.axis2.position())
-    brain.screen.print("Axis 2: ", Controller1.axis2.position())
+    brain.screen.print("Axis 2: ",
+     Controller1.axis2.position())
 
    
 
@@ -334,7 +337,6 @@ def flywheelShoot():
 
     clutchActivate = not(clutchActivate)
     if clutchActivate == True:
-
         clutchPiston.open()
     else: 
         clutchPiston.close()
@@ -418,5 +420,9 @@ def autonum():
 
         wait(500)
             
+while True:
+    odometry()
+
+    wait (50, MSEC)
 #INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
