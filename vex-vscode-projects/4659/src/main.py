@@ -69,6 +69,8 @@ angle = 0
 intakeIncrement = 0
 #Flywheel
 clutchActivate = False
+#START ON ROLLER FOR AUTONOMOUS
+start_on_roller = True
 
 #Motor Grouping---------------------------------------------------#
 RHDrive  = MotorGroup(RFMotor, RRMotor)
@@ -355,6 +357,7 @@ def roller():
     if opticColor == team:
         # CHANGE TO NOT INTERFERE WITH INDEXER
         Intake.stop()
+        
 
     wait(50)
 
@@ -411,18 +414,60 @@ def driver():
         odometry()
         wait(500)
 
+
+def roller_start():
+    # Perform Roller Job
+    LHDrive.spin_for(REVERSE, 90)
+    RHDrive.spin_for(REVERSE, 90)
+    roller()
+    LHDrive.spin_for(FORWARD, 90)
+    RHDrive.spin_for(FORWARD, 90)
+    Intake.spin(FORWARD, 100, RPM)
+
+
+    # Move to disks
+    while(True):
+        odometry()
+        LHDrive.spin(REVERSE, 15, RPM)
+        RHDrive.spin(FORWARD, 15, RPM)
+        if angle >= 2.36:
+            break
+
+    LHDrive.spin_for(FORWARD, 1080)
+    RHDrive.spin_for(FORWARD, 1080)
+
+
+    # Turn and shoot
+    while(True):
+        odometry()
+        LHDrive.spin(REVERSE, 15, RPM)
+        RHDrive.spin(FORWARD, 15, RPM)
+        if angle >= 3.93:
+            break
+    
+
+    flywheelShoot()
+    wait(200)
+    flywheelShoot()
+    
+
+def regular_start():
+    pass
+
+
 def autonum():
+    global start_on_roller
+
+    if start_on_roller:
+        roller_start()
+    else:
+        regular_start()
+
     auton_inititialization()
     while True:                                                                                                                                                                                                                              
-        odometry()
+        #odometry()
         locator()
 
 
         wait(500)
-            
-while True:
-    odometry()
-
-    wait (50, MSEC)
-#INITIALIZING COMPETITION MODE
 comp = Competition(driver, autonum)
