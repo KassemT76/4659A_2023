@@ -86,10 +86,13 @@ class Manual:
                     Motor4.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
                     Motor5.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
                     Motor6.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-            while(time.time() < end):
-                current += step
-                time.sleep(0.01)
-                Motor7.spin(FORWARD, force*self.NORMAL, PERCENT)
+            Timer.reset()
+            Timer.start()
+            while(Timer.elapsed_time() < 2):
+                Motor7.spin(FORWARD, force*self.NORMAL*Timer.elapsed_time()/2, PERCENT)
+
+            Timer.stop()
+            Timer.reset()
     
     def manShoot(self):
         speed = 0;
