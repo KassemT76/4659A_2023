@@ -1,310 +1,123 @@
 # ---------------------------------------------------------------------------- #
 #                                                                              #
 # 	Module:       main.py                                                      #
-# 	Author:       super                                                        #
-# 	Created:      2022-10-19                                                   #
+# 	Author:       Shome                                                        #
+# 	Created:      2/1/2023, 1:42:57 PM                                         #
 # 	Description:  V5 project                                                   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
 # Library imports
+team = 1
 from vex import *
-import math 
+import time
+import math
+brain=Brain()
+Motor1 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor2 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor3 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor4 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor5 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor6 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
+Motor7 = Motor(Ports.PORT7,GearSetting.RATIO_18_1)
+Encoder11 = Encoder(brain.three_wire_port.c)
+Encoder12 = Encoder(brain.three_wire_port.d)
+Encoder21 = Encoder(brain.three_wire_port.e)
+Encoder22 = Encoder(brain.three_wire_port.f)
+Encoder31 = Encoder(brain.three_wire_port.g)
+Encoder32 = Encoder(brain.three_wire_port.h)
+controller = Controller()
+Encoder11.reset_position()
+Encoder12.reset_position()
+Encoder21.reset_position()
+Encoder22.reset_position()
+Encoder31.reset_position()
+Encoder32.reset_position()
 
-# CONFIGURATION ------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -Variable Definitions
-#   -Calibration
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-brain          = Brain()
-Controller1    = Controller()
-
-Flywheel1      = Motor(Ports.PORT11, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
-Flywheel2      = Motor(Ports.PORT12, GearSetting.RATIO_6_1  , False )    #Do not change gear ratio
-Intake         = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , True  )    #Not Finalized  
-Rollers        = Motor(Ports.PORT21, GearSetting.RATIO_18_1 , False )    #Not Finalized
-LFMotor        = Motor(Ports.PORT11, GearSetting.RATIO_36_1 , True )
-LRMotor        = Motor(Ports.PORT12, GearSetting.RATIO_36_1 , True )
-RFMotor        = Motor(Ports.PORT13, GearSetting.RATIO_36_1 , False  )
-RRMotor        = Motor(Ports.PORT14, GearSetting.RATIO_36_1 , False )
-
-p1 = Pneumatics(brain.three_wire_port.h)
-
-opticSens = Optical(Ports.PORT1)
-
-encL = Encoder(brain.three_wire_port.c)
-encL2 = Encoder(brain.three_wire_port.d)
-encR = Encoder(brain.three_wire_port.a)
-encR2 = Encoder(brain.three_wire_port.b)
-encM = Encoder(brain.three_wire_port.e)
-encM2 = Encoder(brain.three_wire_port.f)
-
-#Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
-intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
-flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
-
-#DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
-startUp      = False #False is flywheel startup not complete, True is complete
-Shutdown     = False #Used for shutting down flywheel
-startUpRPM   = 580
-internalRPM  = 0
-RPMIncrement = 10
-RPMDelay     = 0.025   #delay in seconds          tune for startup/shutdown speed
-setSpeed = 2
-
-#Changable globals
-team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
-position = [0.0, 0.0]
-orientation = 90 # Value in degrees (90 = facing forwards)
-
-#Motor Grouping---------------------------------------------------#
-RHDrive  = MotorGroup(RFMotor, RRMotor)
-LHDrive  = MotorGroup(LFMotor, LRMotor)
-Flywheel = MotorGroup(Flywheel1, Flywheel2)
-
-#First print
-brain.screen.print("Program Loaded!")
-#Information header
-brain.screen.clear_line()
-brain.screen.set_cursor(1,0)
-brain.screen.print("Information: ")
-
-def pre_autonum():  
-    encL.reset_position()
-    encL2.reset_position()
-    encR.reset_position()
-    encR2.reset_position()
-
-# Low Level Services ------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -Odometry
-#   -PID controls
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-#Find distance travelled from encoder
-def odometry():
-    global position
-    global orientation
+def clamp(num, min_value, max_value):
+    return max(min(num, max_value), min_value)
+class Manual:
     
-    distance_per_rotation = 10.21 # Measurement in INCHES
+    def __init__(self):
+        self.NORMAL = (100/127)
+        self.feather = [0.0, 0.0, 0.0, 0.0]
 
-    d_left = encL.value()/360 * distance_per_rotation
-    d_right = encR.value()/360 * distance_per_rotation
-    d_average = (d_left + d_right) / 2
+    def move(self):
+        Motor1.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor2.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor3.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor4.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor5.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor6.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+    #1 is blue
+    #2 is red
+    def autoShoot(self,posX,posY,orientation,team):
+        netposx=0
+        netposy=0
+        if (team == 1):
+            netposx=980
+            netposy=980
+        elif (team == 2):
+            netposx=20
+            netposy=20
+        if(controller.buttonLeft):
 
-    position[0] = math.cos(orientation) * d_average
-    position[1] = math.sin(orientation) * d_average
-
-    # PRINT ENCODER VALUES
-    brain.screen.set_cursor(8,0)
-    brain.screen.clear_line()
-    brain.screen.print("Left Encoder: ", d_left)
-
-
-    brain.screen.set_cursor(9,0)
-    brain.screen.clear_line()
-    brain.screen.print("Right Encoder: ", d_right)
-
-    brain.screen.set_cursor(10,0)
-    brain.screen.clear_line()
-    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
+            distanceX = netposx-posX
+            distanceY = netposy-posY
+            force = (math.sqrt(distanceX+distanceY))*0.1
+            desiredAngled = math.degrees(math.tan(distanceY/distanceX))
+            angleDiff=desiredAngled-orientation
+            start = time.time()
+            end = start+2
+            current = 0
+            step = force / (2 * 100)
+            while(abs(angleDiff) > 0.1):
+                if(angleDiff > 0.1):
+                    Motor1.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor2.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor3.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor4.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor5.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor6.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                elif (angleDiff < -0.1):
+                    Motor1.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor2.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor3.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor4.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor5.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor6.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
+            while(time.time() < end):
+                current += step
+                time.sleep(0.01)
+                Motor7.spin(FORWARD, force*self.NORMAL, PERCENT)
     
-    brain.screen.set_cursor(11,0)
-    brain.screen.clear_line()
-    brain.screen.print("Y-Position: ", position[1])
-    wait(15)
+    def manShoot(self):
+        speed = 0;
+        if controller.buttonR2.pressing():
+            speed = 85;
+            self.feather[0] = 1;
 
-def flywheelRPM():
-    iLoveFlywheels = Flywheel.velocity(VelocityUnits.RPM) * 6
-    return(iLoveFlywheels)
+        if controller.buttonR1.pressing():
+            speed = 75;
+            self.feather[0] = 1;
 
-def flywheelStartup():
-    Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    while internalRPM <= startUpRPM:
-        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-        internalRPM = internalRPM + RPMIncrement
-        wait(RPMDelay, SECONDS)
-    startUp = True
-
-def flywheelShutdown():
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    while internalRPM > 0:
-        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-        internalRPM = internalRPM - RPMIncrement
-        wait(RPMDelay, SECONDS)
-    Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
-
-#Threading-------------------------------------------------------#
-
-def flywheelControl(RPM):
-    if startUp == True and Shutdown == False:
-        print("Pid goes here")
-
-
-# #Driving Controls------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -SPEED CONTROLS
-#   -MOTOR MOVEMENT
-#   -TEST FUNCTION
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-#Driving Controls------------------------------------------------------------------#
-
-#Speed Settings-------------------------------------------#
-def changeSpeedDown():
-    global setSpeed
-    setSpeed = 2
-    Controller1.screen.clear_row(1)
-    Controller1.screen.set_cursor(1,0)
-    Controller1.screen.print("Speed",setSpeed)
-
-def changeSpeedN():
-    global setSpeed
-    setSpeed = 3
-    Controller1.screen.clear_row(1)
-    Controller1.screen.print("Speed",setSpeed)
-    
-def changeSpeedUp():
-    global setSpeed
-    setSpeed = 4
-    Controller1.screen.clear_row(1)
-    Controller1.screen.print("Speed",setSpeed)
-
-#Moving the motors----------------------------------------#
-
-ppos = 1
-ppos2 = 1
-ppos3 = 1
-ppos4 =1
-
-#IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
-def moveMRight():
-    global ppos
-    global ppos2
-    #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos = Controller1.axis2.position()
-    #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
-    if pos < 0:
-        RHDrive.spin(REVERSE)
-        if pos < ppos:
-            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-        ppos = int(pos/10+0.99)*10
-    elif pos > 0:
-        RHDrive.spin(FORWARD)
-        if pos > ppos2:
-            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-        ppos2 = int(pos/10+0.99)*10
-    else:
-        RHDrive.set_velocity(0, PERCENT)
-        RHDrive.spin(REVERSE)
-        RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-    #PRINTS INFO
-    brain.screen.set_cursor(4,0)
-    brain.screen.clear_row()
-
-    brain.screen.print("Axis 2: ", Controller1.axis2.position())
-    brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", RHDrive.velocity() )
-
-   
-
-#IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
-def moveMLeft():
-    global ppos3
-    global ppos4
-    #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos1 = Controller1.axis3.position()
-    #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
-
-    if pos1 < 0:
-        LHDrive.spin(REVERSE)
-        if pos1 < ppos3:
-            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
+        if(speed > 0):
+            Motor7.spin(REVERSE, self.NORMAL*(2/3), PERCENT)
         
-    elif pos1 > 0:
-        LHDrive.spin(FORWARD)
-        if pos1 > ppos4:
-            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
-    else:
-        LHDrive.set_velocity(0, PERCENT)
-    ppos3 = int(pos1/10+0.99)*10
-    ppos4 = int(pos1/10+0.99)*10
-    #PRINTS INFO
-    brain.screen.set_cursor(3,0)
-    brain.screen.clear_row()
-    brain.screen.print("Axis 3: ", Controller1.axis3.position())
+        if(not controller.buttonR1.pressing() and not controller.buttonR2.pressing()):
+            Motor7.set_velocity(self.feather[0])
+            if(self.feather[0] >= 0):
+                self.feather[0] -= 0.01
+                wait(50, MSEC)
 
-def testFunction():
-    LHDrive.spin_for(FORWARD, 360, DEGREES, 10, RPM, wait=False)
-    RHDrive.spin_for(REVERSE, 360, DEGREES, 10, RPM)
-
-# #Autonum Controls------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -ROLLER MOVEMENT
-# 
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def roller():
-    global team
-    x = 0
-
-    Rollers.spin(FORWARD, 100, RPM)
-    while x != 1:
-        opticColor = opticSens.color() 
-        brain.screen.set_cursor(12,0)
-        brain.screen.clear_line()
-        brain.screen.print("Color ", opticColor)
-        if opticColor == team:
-            Rollers.stop()
-            x=1 
-        wait(50)
-        
-# Competition Templates Controls------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -DRIVER TEMPLATE
-#   -AUTONUM TEMPLATE
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-pre_autonum()
-
-#Competition Templating----------------------------------------------------------------------------------#
-def driver():
-    #LISTENS FOR A CHANGE IN JOYSTICKS
-    Controller1.axis2.changed(moveMRight)
-    Controller1.axis3.changed(moveMLeft)
-    #ARROW BUTTONS TO CHANGE SPEED
-    Controller1.buttonDown.pressed(changeSpeedDown)
-    Controller1.buttonUp.pressed(changeSpeedUp)  
-    Controller1.buttonRight.pressed(changeSpeedN)
-    #BUTTON TO TEST AUTONUM IN DRIVE MODE
-    Controller1.buttonB.pressed(roller)
-    #turn on odometry
-    while True:
-        odometry()
-        wait(15) 
-
-def autonum():
-    while True:
-        odometry()
-        if position[1] < 10:
-            LHDrive.spin(FORWARD, 10, RPM)
-            RHDrive.spin(FORWARD, 10, RPM)
-        else:
-            LHDrive.stop()
-            RHDrive.stop()
-            
-#INITIALIZING COMPETITION MODE
-comp = Competition(driver, autonum)
+driver = Manual()
+competitionVar = Competition
+i=0
+f=0
+while True:
+    print(Encoder11.value()," ", Encoder22.value()," ", Encoder21.value()," ", Encoder31.value())
+    if(competitionVar.is_enabled() == True):
+        if(competitionVar.is_driver_control()):
+            driver.move()
+            Motor7.spin(FORWARD,10,VoltageUnits.VOLT)
+            #127
