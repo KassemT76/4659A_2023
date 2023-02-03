@@ -90,9 +90,11 @@ class Manual:
             Timer.start()
             while(Timer.elapsed_time() < 2):
                 Motor7.spin(FORWARD, force*self.NORMAL*Timer.elapsed_time()/2, PERCENT)
-
             Timer.stop()
-            Timer.reset()
+            charged = true
+            if(abs(angleDiff)< 0.1 and charged):
+                Motor8.spin(REVERSE, 50, PERCENT)
+                charged = false
     
     def manShoot(self):
         speed = 0;
