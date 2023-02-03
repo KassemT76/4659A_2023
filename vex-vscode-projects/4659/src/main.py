@@ -13,6 +13,18 @@ from vex import *
 import time
 import math
 brain=Brain()
+
+#Motor 1-6 are Drive Train
+#Orientation is as follows
+
+#front
+
+#1 4
+#2 5
+#3 6
+
+#back
+
 Motor1 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
 Motor2 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
 Motor3 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
@@ -20,13 +32,20 @@ Motor4 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
 Motor5 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
 Motor6 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
 Motor7 = Motor(Ports.PORT7,GearSetting.RATIO_18_1)
+
+#Encoders
+#Right Side Encoders
 Encoder11 = Encoder(brain.three_wire_port.c)
 Encoder12 = Encoder(brain.three_wire_port.d)
+#Back Encoders
 Encoder21 = Encoder(brain.three_wire_port.e)
 Encoder22 = Encoder(brain.three_wire_port.f)
+#Left Encoder
 Encoder31 = Encoder(brain.three_wire_port.g)
 Encoder32 = Encoder(brain.three_wire_port.h)
+#Controller
 controller = Controller()
+#Resetting Encoders incase of who knows
 Encoder11.reset_position()
 Encoder12.reset_position()
 Encoder21.reset_position()
@@ -34,14 +53,17 @@ Encoder22.reset_position()
 Encoder31.reset_position()
 Encoder32.reset_position()
 
+#for later maybe
 def clamp(num, min_value, max_value):
     return max(min(num, max_value), min_value)
+
+#Manual Driving Class
 class Manual:
-    
+    #Initialize
     def __init__(self):
         self.NORMAL = (100/127)
         self.feather = [0.0, 0.0, 0.0, 0.0]
-
+    #Movement Logic
     def move(self):
         Motor1.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
         Motor2.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
@@ -49,6 +71,7 @@ class Manual:
         Motor4.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
         Motor5.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
         Motor6.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+    #Auto Position and shoot function
     #1 is blue
     #2 is red
     def autoShoot(self,posX,posY,orientation,team):
@@ -95,7 +118,7 @@ class Manual:
             if(abs(angleDiff)< 0.1 and charged):
                 Motor8.spin(REVERSE, 50, PERCENT)
                 charged = false
-    
+    #Manual Shooting
     def manShoot(self):
         speed = 0;
         if controller.buttonR2.pressing():
@@ -118,11 +141,16 @@ class Manual:
 driver = Manual()
 competitionVar = Competition
 i=0
+
 f=0
+#Main Loop
 while True:
+    #Debugging
     print(Encoder11.value()," ", Encoder22.value()," ", Encoder21.value()," ", Encoder31.value())
+    #Check for different game states eg. auton, driver
     if(competitionVar.is_enabled() == True):
         if(competitionVar.is_driver_control()):
             driver.move()
+            #more debugging
             Motor7.spin(FORWARD,10,VoltageUnits.VOLT)
             #127
