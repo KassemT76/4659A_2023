@@ -13,7 +13,6 @@ from vex import *
 import time
 import math
 brain=Brain()
-
 #Motor 1-6 are Drive Train
 #Orientation is as follows
 
@@ -26,12 +25,13 @@ brain=Brain()
 #back
 
 Motor1 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor2 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor3 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor4 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor5 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor6 = Motor(Ports.PORT1,GearSetting.RATIO_36_1)
-Motor7 = Motor(Ports.PORT7,GearSetting.RATIO_18_1)
+Motor2 = Motor(Ports.PORT2,GearSetting.RATIO_36_1)
+Motor3 = Motor(Ports.PORT3,GearSetting.RATIO_36_1)
+Motor4 = Motor(Ports.PORT4,GearSetting.RATIO_36_1)
+Motor5 = Motor(Ports.PORT5,GearSetting.RATIO_36_1)
+Motor6 = Motor(Ports.PORT6,GearSetting.RATIO_36_1)
+Motor7 = Motor(Ports.PORT7,GearSetting.RATIO_36_1)
+Motor8 = Motor(Ports.PORT8,GearSetting.RATIO_36_1)
 
 #Encoders
 #Right Side Encoders
@@ -62,15 +62,38 @@ class Manual:
     #Initialize
     def __init__(self):
         self.NORMAL = (100/127)
-        self.feather = [0.0, 0.0, 0.0, 0.0]
+        self.feather = {}
+    
+    #Timer
+    class Timer:
+        def __init__(self, id, cd=1200):
+            self.id = id
+            self.cd = cd
+            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def has_passed(self):
+            if(time.time() - self.timecodes[self.id] > self.cd):
+                self.timecodes[self.id] = time.time()
+                return True
+            return False
+
+        def elapsed_time(self):
+            return time.time() - self.timecodes[self.id];
+        
+        def reset(self):
+            self.timecodes[self.id] = 0.0
+
+        def start(self):
+            pass
+    
     #Movement Logic
     def move(self):
         Motor1.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
         Motor2.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
         Motor3.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
-        Motor4.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
-        Motor5.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
-        Motor6.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor4.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor5.spin(FORWARD, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
+        Motor6.spin(REVERSE, (controller.axis3.value()-controller.axis4.value()*self.NORMAL)*(2/3), PERCENT)
     #Auto Position and shoot function
     #1 is blue
     #2 is red
@@ -109,15 +132,15 @@ class Manual:
                     Motor4.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
                     Motor5.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
                     Motor6.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-            Timer.reset()
-            Timer.start()
-            while(Timer.elapsed_time() < 2):
-                Motor7.spin(FORWARD, force*self.NORMAL*Timer.elapsed_time()/2, PERCENT)
-            Timer.stop()
-            charged = true
+
+            test_timer = self.Timer("Motor7Feather")
+            while(test_timer.elapsed_time() < 2):
+                Motor7.spin(FORWARD, force*self.NORMAL*test_timer.elapsed_time()/2, PERCENT)
+            test_timer.reset()
+            charged = True
             if(abs(angleDiff)< 0.1 and charged):
                 Motor8.spin(REVERSE, 50, PERCENT)
-                charged = false
+                charged = False
     #Manual Shooting
     def manShoot(self):
         speed = 0;
