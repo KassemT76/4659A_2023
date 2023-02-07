@@ -119,28 +119,28 @@ class Manual:
             step = force / (2 * 100)
             while(abs(angleDiff) > 0.1):
                 if(angleDiff > 0.1):
-                    Motor1.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor2.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor3.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor4.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor5.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor6.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
+                    Motor1.spin(FORWARD, (100/3), PERCENT)
+                    Motor2.spin(FORWARD, (100/3), PERCENT)
+                    Motor3.spin(REVERSE, (100/3), PERCENT)
+                    Motor4.spin(FORWARD, (100/3), PERCENT)
+                    Motor5.spin(FORWARD, (100/3), PERCENT)
+                    Motor6.spin(REVERSE, (100/3), PERCENT)
                 elif (angleDiff < -0.1):
-                    Motor1.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor2.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor3.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor4.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor5.spin(REVERSE, 100*self.NORMAL*(1/3), PERCENT)
-                    Motor6.spin(FORWARD, 100*self.NORMAL*(1/3), PERCENT)
-
-            test_timer = self.Timer("Motor7Feather")
-            while(test_timer.elapsed_time() < 2):
-                Motor7.spin(FORWARD, force*self.NORMAL*test_timer.elapsed_time()/2, PERCENT)
-            test_timer.reset()
-            charged = True
-            if(abs(angleDiff)< 0.1 and charged):
-                Motor8.spin(REVERSE, 50, PERCENT)
-                charged = False
+                    Motor1.spin(REVERSE, (100/3), PERCENT)
+                    Motor2.spin(REVERSE, (100/3), PERCENT)
+                    Motor3.spin(FORWARD, (100/3), PERCENT)
+                    Motor4.spin(REVERSE, (100/3), PERCENT)
+                    Motor5.spin(REVERSE, (100/3), PERCENT)
+                    Motor6.spin(FORWARD, (100/3), PERCENT)
+            for x in range(3):
+                test_timer = self.Timer("Motor7Feather")
+                while(test_timer.elapsed_time() < 2):
+                    Motor7.spin(FORWARD, force*test_timer.elapsed_time()/2, PERCENT)
+                test_timer.reset()
+                charged = True
+                if(abs(angleDiff)< 0.1 and charged):
+                    Motor8.spin(REVERSE, 50, PERCENT)
+                    charged = False
     #Manual Shooting
     def manShoot(self):
         speed = 0;
