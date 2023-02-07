@@ -22,12 +22,15 @@ import math
 brain          = Brain()
 Controller1    = Controller()
 
-Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , True  )    #Do not change gear ratio
+Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , False  )    #Do not change gear ratio
 
-Intake         = Motor(Ports.PORT8, GearSetting.RATIO_36_1 , False  )    
+Intake         = Motor(Ports.PORT8, GearSetting.RATIO_36_1 , True  )    
 
+LFFMotor       = Motor(Ports.PORT5, GearSetting.RATIO_36_1 , False )
 LFMotor        = Motor(Ports.PORT1, GearSetting.RATIO_36_1 , True )
 LRMotor        = Motor(Ports.PORT2, GearSetting.RATIO_36_1 , True )
+
+RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
@@ -51,7 +54,7 @@ flywheelTargetRpm  = 3600       #The only thing that should touch this variable,
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
 startUp      = False #False is flywheel startup not complete, True is complete
 Shutdown     = False #Used for shutting down flywheel
-startUpRPM   = 580
+startUpRPM   = 200
 internalRPM  = 0
 RPMIncrement = 10
 setSpeed = 2
@@ -66,15 +69,15 @@ old_left = 0
 old_right = 0
 angle = 0
 #Intake
-intakeIncrement = 0
+intakeSpeed = 200
 #Flywheel
 clutchActivate = False
 #START ON ROLLER FOR AUTONOMOUS
-start_on_roller = True
+start_on_roller = False
 
 #Motor Grouping---------------------------------------------------#
-RHDrive  = MotorGroup(RFMotor, RRMotor)
-LHDrive  = MotorGroup(LFMotor, LRMotor)
+RHDrive  = MotorGroup(RFFMotor, RFMotor, RRMotor)
+LHDrive  = MotorGroup(LFFMotor, LFMotor, LRMotor)
 
 #First print
 brain.screen.print("Program Loaded!")
@@ -197,10 +200,10 @@ def odometry():
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
-    global intakeStatus
+    global intakeStatus, intakeSpeed
 
     if intakeStatus == True:
-        Intake.spin(FORWARD,100, RPM)
+        Intake.spin(FORWARD, intakeSpeed, RPM)
     else:
         Intake.stop()
 
@@ -254,10 +257,10 @@ def changeSpeedUp():
 
 #Moving the motors----------------------------------------#
 
-ppos = 1
+ppos  = 1
 ppos2 = 1
 ppos3 = 1
-ppos4 =1
+ppos4 = 1
 
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
 def moveMRight():
@@ -335,20 +338,23 @@ def intakeButton():
     intakeControl()
 
 def flywheelShoot():
-    global clutchActivate
+    global clutchActivate, intakeSpeed
 
     clutchActivate = not(clutchActivate)
+    
     if clutchActivate == True:
         clutchPiston.open()
+        Intake.spin(REVERSE, 40, RPM)
     else: 
         clutchPiston.close()
+        Intake.spin(FORWARD, intakeSpeed, RPM)
     
 def roller():
-    global team
+    global team, intakeSpeed
     opticColor = opticSens.color() 
 
     if opticColor == opp_team:
-        Intake.spin(FORWARD, 100, RPM)   
+        Intake.spin(FORWARD, intakeSpeed, RPM)   
 
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
@@ -404,15 +410,15 @@ def driver():
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
-    Controller1.buttonR1.pressed(intakeButton)
+    Controller1.buttonL1.pressed(intakeButton)
+    Controller1.buttonR1.pressed(flywheelStartup)
     Controller1.buttonR2.pressed(flywheelShoot)
+    Controller1.buttonL2.pressed(flywheelShutdown)
 
-    Controller1.buttonLeft.pressed(flywheelShutdown)
-
-    #turn on odometry
-    while True:
-        odometry()
-        wait(500)
+    # #turn on odometry
+    # while True:
+    #     odometry()
+    #     wait(500)
 
 
 def roller_start():
@@ -422,7 +428,7 @@ def roller_start():
     roller()
     LHDrive.spin_for(FORWARD, 90)
     RHDrive.spin_for(FORWARD, 90)
-    Intake.spin(FORWARD, 100, RPM)
+    Intake.spin(FORWARD, intakeSpeed, RPM)
 
 
     # Move to disks
@@ -450,7 +456,6 @@ def roller_start():
     wait(200)
     flywheelShoot()
     
-
 def regular_start():
     pass
 
@@ -458,16 +463,11 @@ def regular_start():
 def autonum():
     global start_on_roller
 
+    auton_inititialization()
+
     if start_on_roller:
         roller_start()
     else:
         regular_start()
 
-    auton_inititialization()
-    while True:                                                                                                                                                                                                                              
-        #odometry()
-        locator()
-
-
-        wait(500)
 comp = Competition(driver, autonum)
