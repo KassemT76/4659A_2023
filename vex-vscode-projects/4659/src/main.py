@@ -45,8 +45,6 @@ encR2 = Encoder(brain.three_wire_port.b)
 encM = Encoder(brain.three_wire_port.e)
 encM2 = Encoder(brain.three_wire_port.f)
 
-clutchPiston = Pneumatics(brain.three_wire_port.g)
-
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
 flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
@@ -71,7 +69,7 @@ angle = 0
 #Intake
 intakeSpeed = 200
 #Flywheel
-clutchActivate = False
+shooterActivate = False
 #START ON ROLLER FOR AUTONOMOUS
 start_on_roller = False
 
@@ -319,10 +317,6 @@ def moveMLeft():
     brain.screen.clear_row()
     brain.screen.print("Axis 3: ", Controller1.axis3.position())
 
-def testFunction():
-    LHDrive.spin_for(FORWARD, 360, DEGREES, 10, RPM, wait=False)
-    RHDrive.spin_for(REVERSE, 360, DEGREES, 10, RPM)
-
 # #Autonum Controls------------------------------------------------------------------#
 #
 #   INCLUDES
@@ -338,15 +332,11 @@ def intakeButton():
     intakeControl()
 
 def flywheelShoot():
-    global clutchActivate, intakeSpeed
+    global shooterActivate, intakeSpeed
 
-    clutchActivate = not(clutchActivate)
-    
-    if clutchActivate == True:
-        clutchPiston.open()
+    if shooterActivate == True:
         Intake.spin(REVERSE, 40, RPM)
-    else: 
-        clutchPiston.close()
+    else:
         Intake.spin(FORWARD, intakeSpeed, RPM)
     
 def roller():
