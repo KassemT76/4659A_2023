@@ -132,6 +132,10 @@ def shutDown():
 #   -PID controls
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+def ControllerGUI(row, text, var):
+    Controller1.screen.clear_row(row)
+    Controller1.screen.set_cursor(row,0)
+    Controller1.screen.print(text, var)
 
 #Find distance travelled
 def odometry():
@@ -207,6 +211,49 @@ def intakeControl():  #This is a intake control thread
     else:
         Intake.stop()
 
+def autoShoot(posX,posY,orientation,team):
+        netposx=0
+        netposy=0
+        if (team == 1):
+            netposx=980
+            netposy=980
+        elif (team == 2):
+            netposx=20
+            netposy=20
+        if(Controller1.buttonLeft):
+
+            distanceX = netposx-posX
+            distanceY = netposy-posY
+            force = (math.sqrt(distanceX+distanceY))*0.1
+            desiredAngled = math.tan(distanceY/distanceX)
+            angleDiff=desiredAngled-orientation
+            start = time.time()
+            end = start+2
+            current = 0
+            step = force / (2 * 100)
+            while(abs(angleDiff) > 0.0523599):
+                if(angleDiff > 0.0523599):
+                    LHDrive.spin_for(REVERSE, 90)
+                    RHDrive.spin_for(FORWARD, 90)
+                elif (angleDiff < -0.0523599):
+                    LHDrive.spin_for(FORWARD, 90)
+                    LHDrive.spin_for(REVERSE, 90)
+            for x in range(3):
+                flywheel_timer = Timer("Motor7Feather")
+                while(flywheel_timer.elapsed_time() < 2):
+                    Flywheel.spin(FORWARD, force*flywheel_timer.elapsed_time()/2, PERCENT)
+                flywheel_timer.reset()
+                charged = True
+                if(abs(angleDiff)< 0.0523599 and charged):
+                    Intake.spin(REVERSE, 50, PERCENT)
+                    charged = False
+
+
+def AutonHardCode():
+    LHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
+    RHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
+    roller()
+    autoShoot()
 
 def flywheelStartup():
     Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
@@ -239,22 +286,17 @@ def flywheelShutdown():
 def changeSpeedDown():
     global setSpeed
     setSpeed = 2
-    Controller1.screen.clear_row(1)
-    Controller1.screen.set_cursor(1,0)
-    Controller1.screen.print("Speed",setSpeed)
+    ControllerGUI(1, "Speed", setSpeed)
 
 def changeSpeedN():
     global setSpeed
     setSpeed = 3
-    Controller1.screen.clear_row(1)
-    Controller1.screen.print("Speed",setSpeed)
-    
+    ControllerGUI(1, "Speed", setSpeed)
+
 def changeSpeedUp():
     global setSpeed
     setSpeed = 4
-    Controller1.screen.clear_row(1)
-    Controller1.screen.print("Speed",setSpeed)
-
+    ControllerGUI(1, "Speed", setSpeed)
 #Moving the motors----------------------------------------#
 
 ppos  = 1
@@ -396,6 +438,31 @@ def locator():
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
+
+class Timer:
+        def __init__(self, id, cd=1200):
+            self.id = id
+            self.cd = cd
+            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def has_passed(self):
+            if(time.time() - self.timecodes[self.id] > self.cd):
+                self.timecodes[self.id] = time.time()
+                return True
+            return False
+
+        def elapsed_time(self):
+            return time.time() - self.timecodes[self.id];
+        
+        def reset(self):
+            self.timecodes[self.id] = 0.0
+
+        def start(self):
+            pass
+
+
+
+
 initialization()
 
 #Competition Templating----------------------------------------------------------------------------------#
@@ -419,7 +486,6 @@ def driver():
     # while True:
     #     odometry()
     #     wait(500)
-
 
 def roller_start():
     # Perform Roller Job
