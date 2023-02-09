@@ -85,12 +85,40 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+class Timer:
+        def __init__(self, id, cd=1200):
+            self.id = id
+            self.cd = cd
+            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def has_passed(self):
+            if(time.time() - self.timecodes[self.id] > self.cd):
+                self.timecodes[self.id] = time.time()
+                return True
+            return False
+
+        def elapsed_time(self):
+            return time.time() - self.timecodes[self.id];
+        
+        def reset(self):
+            self.timecodes[self.id] = 0.0
+
+        def start(self):
+            pass
+
 def initialization():  
     encL.reset_position()
     encL2.reset_position()
     encR.reset_position()
     encR2.reset_position()
 
+autonHardCodeTimer = Timer(0)
+def autonHardCode():
+    global autonHardCodeTimer
+    while(autonHardCodeTimer.elapsed_time() < 2):
+        LHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+        RHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+        
 def driver_initialization():
     global startUp
     global intakeStatus
@@ -208,6 +236,8 @@ def intakeControl():  #This is a intake control thread
         Intake.spin(REVERSE, intakeSpeed, RPM)
     else:
         Intake.stop()
+
+
 
 def autoShoot(posX,posY,orientation,team):
         netposx=0
@@ -461,26 +491,7 @@ def locator():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-class Timer:
-        def __init__(self, id, cd=1200):
-            self.id = id
-            self.cd = cd
-            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-        def has_passed(self):
-            if(time.time() - self.timecodes[self.id] > self.cd):
-                self.timecodes[self.id] = time.time()
-                return True
-            return False
-
-        def elapsed_time(self):
-            return time.time() - self.timecodes[self.id];
-        
-        def reset(self):
-            self.timecodes[self.id] = 0.0
-
-        def start(self):
-            pass
 
 
 
