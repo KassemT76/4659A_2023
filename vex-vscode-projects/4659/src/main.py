@@ -307,7 +307,7 @@ def moveMRight():
     global ppos
     global ppos2
     #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos = Controller1.axis2.position()
+    pos = round(Controller1.axis2.position() / 1.5)
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         RHDrive.spin(REVERSE)
@@ -338,7 +338,7 @@ def moveMLeft():
     global ppos3
     global ppos4
     #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos1 = Controller1.axis3.position()
+    pos1 = round(Controller1.axis3.position() / 1.5)
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
 
     if pos1 < 0:
