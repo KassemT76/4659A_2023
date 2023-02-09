@@ -146,7 +146,6 @@ def odometry():
     d_left = ((new_left - old_left) * distance_per_rotation)/360
     d_right = ((new_right - old_right) * distance_per_rotation)/360
 
-    
     #CALCULATE ORIENTATION
     d_angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
 
@@ -222,6 +221,30 @@ def flywheelShutdown():
         internalRPM = internalRPM - RPMIncrement
         wait(RPMDelay, SECONDS)
     Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
+
+def flywheelKeepSpeed():
+    internalRPM = Flywheel.velocity(RPM)
+    global flywheelTargetRpm
+    #while internalRPM > flywheelTargetRpm + 10 or internalRPM < flywheelTargetRpm - 10:
+    if startUp == False and shutDown == False:
+        if internalRPM < flywheelTargetRpm:
+            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            internalRPM = internalRPM + RPMIncrement
+            wait(RPMDelay, SECONDS)
+        else:
+            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            internalRPM = internalRPM - RPMIncrement
+            wait(RPMDelay, SECONDS)
+
+def changeFlywheelSPeed1():
+    global flywheelTargetRpm
+    flywheelTargetRpm = 100
+
+def changeFlywheelSPeed2():
+    global flywheelTargetRpm
+    flywheelTargetRpm = 200
+
+
 # #Driving Controls------------------------------------------------------------------#
 #
 #   INCLUDES
@@ -400,6 +423,10 @@ def driver():
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
+    #flywheel
+    Controller1.buttonX.pressed(changeFlywheelSPeed1)
+    Controller1.buttonA.pressed(changeFlywheelSPeed2)
+    #buttons triggers
     Controller1.buttonL1.pressed(intakeButton)
     Controller1.buttonR1.pressed(flywheelStartup)
     Controller1.buttonR2.pressed(flywheelShoot)
