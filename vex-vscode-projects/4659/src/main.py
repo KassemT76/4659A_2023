@@ -47,7 +47,7 @@ encM2 = Encoder(brain.three_wire_port.f)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
-flywheelTargetRpm  = 3600       #The only thing that should touch this variable, is the flywheel control program, and the physics equation
+flywheelTargetRpm  = 200     #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
 startUp      = False #False is flywheel startup not complete, True is complete
@@ -55,6 +55,7 @@ Shutdown     = False #Used for shutting down flywheel
 startUpRPM   = 200
 internalRPM  = 0
 RPMIncrement = 10
+PIDIncrement = 10
 setSpeed = 2
 RPMDelay     = 0.025
 
@@ -100,7 +101,7 @@ def driver_initialization():
     flywheelStartup()
 
     intakeStatus = True
-    intakeControl()
+    # intakeControl()
     
     
 def auton_inititialization():
@@ -198,14 +199,17 @@ def odometry():
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
     global intakeStatus, intakeSpeed
-
+   
     if intakeStatus == True:
-        Intake.spin(FORWARD, intakeSpeed, RPM)
+        Intake.spin(REVERSE, intakeSpeed, RPM)
     else:
         Intake.stop()
 
 
 def flywheelStartup():
+    global Shutdown
+    global startUp
+    Shutdown = False
     Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
     internalRPM = Flywheel.velocity(VelocityUnits.RPM)
     while internalRPM <= startUpRPM:
@@ -215,6 +219,10 @@ def flywheelStartup():
     startUp = True
 
 def flywheelShutdown():
+    global Shutdown
+    global startUp
+    startUp = False
+    Shutdown = True
     internalRPM = Flywheel.velocity(VelocityUnits.RPM)
     while internalRPM > 0:
         Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
@@ -226,16 +234,17 @@ def flywheelKeepSpeed():
     internalRPM = Flywheel.velocity(RPM)
     global flywheelTargetRpm
     #while internalRPM > flywheelTargetRpm + 10 or internalRPM < flywheelTargetRpm - 10:
-    if startUp == False and shutDown == False:
+    if startUp == True and Shutdown == False:
         if internalRPM < flywheelTargetRpm:
+            internalRPM = internalRPM + PIDIncrement
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            internalRPM = internalRPM + RPMIncrement
-            wait(RPMDelay, SECONDS)
+            brain.screen.print("go up")
         else:
-            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            internalRPM = internalRPM - RPMIncrement
-            wait(RPMDelay, SECONDS)
-
+            pass
+            # internalRPM = internalRPM - PIDIncrement
+            # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            # brain.screen.print("go down")
+            
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
     flywheelTargetRpm = 100
@@ -356,11 +365,11 @@ def intakeButton():
 
 def flywheelShoot():
     global shooterActivate, intakeSpeed
-
+    shooterActivate = not(shooterActivate)
     if shooterActivate == True:
-        Intake.spin(REVERSE, 40, RPM)
+        Intake.spin(FORWARD, 40, RPM)
     else:
-        Intake.spin(FORWARD, intakeSpeed, RPM)
+        Intake.spin(REVERSE, intakeSpeed, RPM)
     
 def roller():
     global team, intakeSpeed
@@ -432,10 +441,13 @@ def driver():
     Controller1.buttonR2.pressed(flywheelShoot)
     Controller1.buttonL2.pressed(flywheelShutdown)
 
-    # #turn on odometry
-    # while True:
-    #     odometry()
-    #     wait(500)
+    #turn on odometry
+    while True:
+        flywheelKeepSpeed()
+        brain.screen.set_cursor(8,0)
+        brain.screen.clear_row()
+        brain.screen.print(Flywheel.velocity())
+        wait(100)
 
 
 def roller_start():
