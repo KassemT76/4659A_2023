@@ -88,27 +88,6 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
-# class Timer:
-#         def __init__(self, id, cd=1200):
-#             self.id = id
-#             self.cd = cd
-#             self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
-
-#         def has_passed(self):
-#             if(time.time() - self.timecodes[self.id] > self.cd):
-#                 self.timecodes[self.id] = time.time()
-#                 return True
-#             return False
-
-#         def elapsed_time(self):
-#             return time.time() - self.timecodes[self.id]
-        
-#         def reset(self):
-#             self.timecodes[self.id] = 0.0
-
-#         def start(self):
-#             pass
-
 def initialization():  
     encL.reset_position()
     encL2.reset_position()
@@ -464,21 +443,28 @@ def roller_start():
 def regular_start():
     # 10.21 # Measurement in INCHES
         
-    # LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    # RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-    # LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    # RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-    # LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    # RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-    # LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    # RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    for i in range(3):
+        LHDrive.spin_for(FORWARD, 60, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        RHDrive.spin_for(FORWARD, 60, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+        intakeButton()
+        LHDrive.spin_for(FORWARD, 30, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        RHDrive.spin_for(FORWARD, 30, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+        intakeButton()
+    
+    LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
     locator()
     
-    # flywheelStartup()
+    flywheelStartup()
+    flywheelShoot()
 
 def autonum():
     global start_on_rollerS
