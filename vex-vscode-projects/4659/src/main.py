@@ -56,7 +56,9 @@ startUpRPM   = 200
 internalRPM  = 0
 RPMIncrement = 10
 PIDIncrement = 10
-setSpeed     = 2
+
+RPMDelay     = 0.025   #delay in seconds          tune for startup/shutdown speed
+setSpeed = 2
 RPMDelay     = 0.025
 
 #Changable globals
@@ -113,7 +115,6 @@ def initialization():
     encR2.reset_position()
 
 autonHardCodeTimer = Timer(0)
-
 def autonHardCode():
     global autonHardCodeTimer
     while(autonHardCodeTimer.elapsed_time() < 2):
@@ -585,3 +586,5 @@ def autonum():
         roller_start()
     else:
         regular_start()
+
+comp = Competition(driver, autonum)
