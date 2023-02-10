@@ -56,7 +56,7 @@ startUpRPM   = 200
 internalRPM  = 0
 RPMIncrement = 10
 PIDIncrement = 10
-setSpeed = 2
+setSpeed     = 2
 RPMDelay     = 0.025
 
 #Changable globals
@@ -85,12 +85,41 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+class Timer:
+        def __init__(self, id, cd=1200):
+            self.id = id
+            self.cd = cd
+            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def has_passed(self):
+            if(time.time() - self.timecodes[self.id] > self.cd):
+                self.timecodes[self.id] = time.time()
+                return True
+            return False
+
+        def elapsed_time(self):
+            return time.time() - self.timecodes[self.id];
+        
+        def reset(self):
+            self.timecodes[self.id] = 0.0
+
+        def start(self):
+            pass
+
 def initialization():  
     encL.reset_position()
     encL2.reset_position()
     encR.reset_position()
     encR2.reset_position()
 
+autonHardCodeTimer = Timer(0)
+
+def autonHardCode():
+    global autonHardCodeTimer
+    while(autonHardCodeTimer.elapsed_time() < 2):
+        LHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+        RHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+        
 def driver_initialization():
     global startUp
     global intakeStatus
@@ -209,6 +238,8 @@ def intakeControl():  #This is a intake control thread
     else:
         Intake.stop()
 
+
+
 def autoShoot(posX,posY,orientation,team):
         netposx=0
         netposy=0
@@ -251,7 +282,6 @@ def AutonHardCode():
     LHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
     RHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
     roller()
-    autoShoot()
 
 def flywheelStartup():
     global Shutdown
@@ -292,6 +322,16 @@ def flywheelKeepSpeed():
             # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             # brain.screen.print("go down")
             
+
+def Flywheel_TBH():
+    global flyWheelTargetRpm
+    gain = 1.0
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    error = flywheelTargetRpm - internalRPM
+    output = flywheelTargetRpm + gain*error
+    Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
+    
+
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
     flywheelTargetRpm = 100
@@ -339,7 +379,7 @@ def moveMRight():
     global ppos
     global ppos2
     #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos = Controller1.axis2.position()
+    pos = round(Controller1.axis2.position() / 1.5)
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
     if pos < 0:
         RHDrive.spin(REVERSE)
@@ -370,7 +410,7 @@ def moveMLeft():
     global ppos3
     global ppos4
     #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos1 = Controller1.axis3.position()
+    pos1 = round(Controller1.axis3.position() / 1.5)
     #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
 
     if pos1 < 0:
@@ -461,26 +501,7 @@ def locator():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 
-class Timer:
-        def __init__(self, id, cd=1200):
-            self.id = id
-            self.cd = cd
-            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-        def has_passed(self):
-            if(time.time() - self.timecodes[self.id] > self.cd):
-                self.timecodes[self.id] = time.time()
-                return True
-            return False
-
-        def elapsed_time(self):
-            return time.time() - self.timecodes[self.id];
-        
-        def reset(self):
-            self.timecodes[self.id] = 0.0
-
-        def start(self):
-            pass
 
 
 
@@ -564,5 +585,3 @@ def autonum():
         roller_start()
     else:
         regular_start()
-
-comp = Competition(driver, autonum)
