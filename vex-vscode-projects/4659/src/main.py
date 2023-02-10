@@ -166,11 +166,6 @@ def intakeControl():  #This is a intake control thread
     else:
         Intake.stop()
 
-def AutonHardCode():
-    LHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
-    RHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
-    roller()
-
 def flywheelStartup():
     global Shutdown
     global startUp
@@ -209,16 +204,6 @@ def flywheelKeepSpeed():
             # internalRPM = internalRPM - PIDIncrement
             # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             # brain.screen.print("go down")
-            
-
-def Flywheel_TBH():
-    global flyWheelTargetRpm
-    gain = 1.0
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    error = flywheelTargetRpm - internalRPM
-    output = flywheelTargetRpm + gain*error
-    Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
-    
 
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
