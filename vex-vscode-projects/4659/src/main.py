@@ -73,7 +73,7 @@ angle = 0
 #Intake
 intakeSpeed = 200
 #Flywheel
-shooterActivate = False
+# shooterActivate = False
 #START ON ROLLER FOR AUTONOMOUS
 start_on_roller = False
 
@@ -332,13 +332,13 @@ def intakeButton():
     intakeControl()
 
 def flywheelShoot():
-    global shooterActivate, intakeSpeed
+    global intakeStatus, intakeSpeed
 
-    shooterActivate = not(shooterActivate)
-    if shooterActivate == True:
+    intakeStatus = not intakeStatus
+    if intakeStatus == True:
         Intake.spin(FORWARD, 40, RPM)
     else:
-        Intake.spin(REVERSE, intakeSpeed, RPM)
+        Intake.stop()
     
 def roller():
     global team, intakeSpeed
@@ -359,27 +359,28 @@ def roller():
     wait(50)
 
 def locator():
-    x = visionSens.take_snapshot(BlueSignature)
-    brain.screen.set_cursor(3,0)
-    brain.screen.clear_line()
-    brain.screen.print(x)
-
-    if x != None:
-        brain.screen.set_cursor(10,0)
+    while (True):
+        x = visionSens.take_snapshot(RedSignature)
+        brain.screen.set_cursor(3,0)
         brain.screen.clear_line()
-        print(x[0].centerX)
-        if x[0].centerX < 130:
-            LHDrive.spin(REVERSE, 10)
-            RHDrive.spin(FORWARD, 10)
-            
-        elif x[0].centerX > 170:
-            LHDrive.spin(FORWARD, 10)
-            RHDrive.spin(REVERSE, 10)
+        brain.screen.print(x)
 
-        else:
-            LHDrive.stop()
-            RHDrive.stop()
-            return True
+        if x != None:
+            brain.screen.set_cursor(10,0)
+            brain.screen.clear_line()
+            print(x[0].centerX)
+            if x[0].centerX < 130:
+                LHDrive.spin(REVERSE, 10)
+                RHDrive.spin(FORWARD, 10)
+                
+            elif x[0].centerX > 170:
+                LHDrive.spin(FORWARD, 10)
+                RHDrive.spin(REVERSE, 10)
+
+            else:
+                LHDrive.stop()
+                RHDrive.stop()
+                return True
 
         
         
@@ -420,7 +421,7 @@ def driver():
         flywheelKeepSpeed()
         brain.screen.set_cursor(8,0)
         brain.screen.clear_row()
-        brain.screen.print(Flywheel.velocity(), shooterActivate)
+        brain.screen.print(Flywheel.velocity(), intakeStatus)
         wait(100)
 
 def roller_start():
@@ -458,24 +459,25 @@ def roller_start():
     
 def regular_start():
     # 10.21 # Measurement in INCHES
-    while(True):
         
-        LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-        RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-        LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-        RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-        LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-        RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-        LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-        RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
-        while (True):
-            
-            if (locator()):
-                break
-        flywheelStartup()
+    LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    
+    while(True):
+        if (locator()):
+            print("spotted")
+            break
+    
+    flywheelStartup()
 
 
 def autonum():
