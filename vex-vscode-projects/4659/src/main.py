@@ -322,6 +322,16 @@ def flywheelKeepSpeed():
             # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             # brain.screen.print("go down")
             
+
+def Flywheel_TBH():
+    global flyWheelTargetRpm
+    gain = 1.0
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    error = flywheelTargetRpm - internalRPM
+    output = flywheelTargetRpm + gain*error
+    Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
+    
+
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
     flywheelTargetRpm = 100
