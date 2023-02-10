@@ -1,0 +1,36 @@
+def autoShoot(posX,posY,orientation,team):
+        netposx=0
+        netposy=0
+        if (team == 1):
+            netposx=980
+            netposy=980
+        elif (team == 2):
+            netposx=20
+            netposy=20
+        if(Controller1.buttonLeft):
+
+            distanceX = netposx-posX
+            distanceY = netposy-posY
+            force = (math.sqrt(distanceX+distanceY))*0.1
+            desiredAngled = math.tan(distanceY/distanceX)
+            angleDiff=desiredAngled-orientation
+            start = time.time()
+            end = start+2
+            current = 0
+            step = force / (2 * 100)
+            while(abs(angleDiff) > 0.0523599):
+                if(angleDiff > 0.0523599):
+                    LHDrive.spin_for(REVERSE, 90)
+                    RHDrive.spin_for(FORWARD, 90)
+                elif (angleDiff < -0.0523599):
+                    LHDrive.spin_for(FORWARD, 90)
+                    LHDrive.spin_for(REVERSE, 90)
+            for x in range(3):
+                flywheel_timer = Timer("Motor7Feather")
+                while(flywheel_timer.elapsed_time() < 2):
+                    Flywheel.spin(FORWARD, force*flywheel_timer.elapsed_time()/2, PERCENT)
+                flywheel_timer.reset()
+                charged = True
+                if(abs(angleDiff)< 0.0523599 and charged):
+                    Intake.spin(REVERSE, 50, PERCENT)
+                    charged = False

@@ -1,0 +1,65 @@
+
+
+#Find distance travelled
+def odometry():
+    global position, angle, old_left, old_right
+    
+    # FIND DISTANCE TRAVELLED
+    distance_per_rotation = 10.21 # Measurement in INCHES
+    back_tracking_distance = 9.81 # INCHES
+    horizontal_tracking_distance = 3.535 # INCHES
+
+    new_left = encL.value() 
+    new_right = encR.value() 
+
+    d_left = ((new_left - old_left) * distance_per_rotation)/360
+    d_right = ((new_right - old_right) * distance_per_rotation)/360
+
+    #CALCULATE ORIENTATION
+    d_angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
+
+
+    # if angle > math.pi/2 - 0.1 and angle < math.pi/2 + 0.1:
+    #     angle = math.pi/2
+    # elif angle > math.pi - 0.1 and angle < math.pi + 0.1:
+    #     angle = math.pi
+    # elif angle > math.pi*2 - 0.1 and angle < math.pi*2 + 0.1:
+    #     angle = math.pi*2
+    # elif angle > -0.1 and angle < 0.1:
+    #     angle = 0
+
+    if d_angle == 0:
+        position[0] += d_left * math.sin(angle)
+        position[0] += d_left * math.cos(angle)
+    else:
+        side_arc  = 2 * ((d_left/ d_angle) + horizontal_tracking_distance) * math.sin(d_angle / 2)
+        DeltaYSide = side_arc * math.cos(angle + (d_angle / 2))
+        DeltaXSide = side_arc * math.sin(angle + (d_angle / 2))
+        angle += d_angle
+        position[0] += DeltaXSide
+        position[1] += DeltaYSide
+
+    old_left = new_left
+    old_right = new_right
+    d_angle = 0
+
+    # PRINT ENCODER VALUES
+    brain.screen.set_cursor(2,0)
+    brain.screen.clear_line()
+    brain.screen.print("Left Encoder: ", d_left)
+
+    brain.screen.set_cursor(3,0)
+    brain.screen.clear_line()
+    brain.screen.print("Right Encoder: ", d_right)
+
+    brain.screen.set_cursor(4,0)
+    brain.screen.clear_line()
+    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
+    
+    brain.screen.set_cursor(5,0)
+    brain.screen.clear_line()
+    brain.screen.print("Position: ", "X", position[0], "Y", position[1])
+
+    brain.screen.set_cursor(6,0)
+    brain.screen.clear_line()
+    brain.screen.print("Orientation: ", angle)
