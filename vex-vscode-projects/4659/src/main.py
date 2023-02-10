@@ -10,6 +10,7 @@
 # Library imports
 from vex import *
 import math 
+import time
 
 # CONFIGURATION ------------------------------------------------------------------#
 #
@@ -34,9 +35,11 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-RedSignature = Signature(1, 6035, 7111, 6572, -1345, -475, -910, 3.000, 0)
+BlueSignature = Signature(1, -3201, -2091, -2646, 7227, 13637, 10432, 2.400, 0)
+RedSignature  = Signature(1, 4347, 8243, 6294, -371, 1233, 432, 1.600, 0)
+
 opticSens = Optical(Ports.PORT11)
-visionSens = Vision(Ports.PORT9, 50, RedSignature)
+visionSens = Vision(Ports.PORT10, 50, BlueSignature, RedSignature)
 
 encL = Encoder(brain.three_wire_port.c)
 encL2 = Encoder(brain.three_wire_port.d)
@@ -85,26 +88,26 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
-class Timer:
-        def __init__(self, id, cd=1200):
-            self.id = id
-            self.cd = cd
-            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+# class Timer:
+#         def __init__(self, id, cd=1200):
+#             self.id = id
+#             self.cd = cd
+#             self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
 
-        def has_passed(self):
-            if(time.time() - self.timecodes[self.id] > self.cd):
-                self.timecodes[self.id] = time.time()
-                return True
-            return False
+#         def has_passed(self):
+#             if(time.time() - self.timecodes[self.id] > self.cd):
+#                 self.timecodes[self.id] = time.time()
+#                 return True
+#             return False
 
-        def elapsed_time(self):
-            return time.time() - self.timecodes[self.id]
+#         def elapsed_time(self):
+#             return time.time() - self.timecodes[self.id]
         
-        def reset(self):
-            self.timecodes[self.id] = 0.0
+#         def reset(self):
+#             self.timecodes[self.id] = 0.0
 
-        def start(self):
-            pass
+#         def start(self):
+#             pass
 
 def initialization():  
     encL.reset_position()
@@ -165,11 +168,6 @@ def intakeControl():  #This is a intake control thread
         Intake.spin(REVERSE, intakeSpeed, RPM)
     else:
         Intake.stop()
-
-def AutonHardCode():
-    LHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
-    RHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
-    roller()
 
 def flywheelStartup():
     global Shutdown
@@ -335,6 +333,7 @@ def intakeButton():
 
 def flywheelShoot():
     global shooterActivate, intakeSpeed
+
     shooterActivate = not(shooterActivate)
     if shooterActivate == True:
         Intake.spin(FORWARD, 40, RPM)
@@ -360,7 +359,11 @@ def roller():
     wait(50)
 
 def locator():
-    x = visionSens.take_snapshot(RedSignature)
+    x = visionSens.take_snapshot(BlueSignature)
+    brain.screen.set_cursor(3,0)
+    brain.screen.clear_line()
+    brain.screen.print(x)
+
     if x != None:
         brain.screen.set_cursor(10,0)
         brain.screen.clear_line()
@@ -392,7 +395,7 @@ initialization()
 
 #Competition Templating----------------------------------------------------------------------------------#
 def driver():
-    driver_initialization()
+    # driver_initialization()
     #LISTENS FOR A CHANGE IN JOYSTICKS
     Controller1.axis2.changed(moveMRight)
     Controller1.axis3.changed(moveMLeft)
@@ -416,7 +419,7 @@ def driver():
         flywheelKeepSpeed()
         brain.screen.set_cursor(8,0)
         brain.screen.clear_row()
-        brain.screen.print(Flywheel.velocity())
+        brain.screen.print(Flywheel.velocity(), shooterActivate)
         wait(100)
 
 def roller_start():
@@ -453,20 +456,27 @@ def roller_start():
     flywheelShoot()
     
 def regular_start():
-    autonHardCodeTimer = Timer(0)
-# def autonHardCode():
-#     global autonHardCodeTimer
-#     while(autonHardCodeTimer.elapsed_time() < 2):
-#         LHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
-#         RHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
-        
-    pass
+    # 10.21 # Measurement in INCHES
+    while(True):
+        locator()
+        # LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        # RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+
+        # LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        # RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+
+        # LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        # RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+
+        # LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+        # RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
 
 def autonum():
-    global start_on_roller
+    global start_on_rollerS
 
-    auton_inititialization()
+
+    # auton_inititialization()
 
     if start_on_roller:
         roller_start()
