@@ -50,7 +50,7 @@ encM2 = Encoder(brain.three_wire_port.f)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
-flywheelTargetRpm  = 200     #The only thing that should touch this variable, is the flywheel control program, and the physics equation
+flywheelTargetRpm  = 300     #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
 startUp      = False #False is flywheel startup not complete, True is complete
@@ -220,11 +220,11 @@ def Flywheel_TBH():
 
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
-    flywheelTargetRpm = 100
+    flywheelTargetRpm = 300
 
 def changeFlywheelSPeed2():
     global flywheelTargetRpm
-    flywheelTargetRpm = 200
+    flywheelTargetRpm = 500
 
 
 # #Driving Controls------------------------------------------------------------------#
@@ -358,6 +358,9 @@ def roller():
 
     wait(50)
 
+def driver_locator():
+    locator()
+
 def locator():
     while (True):
         x = visionSens.take_snapshot(RedSignature)
@@ -407,6 +410,7 @@ def driver():
     Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
+    Controller1.buttonY.pressed(driver_locator)
     #flywheel
     Controller1.buttonX.pressed(changeFlywheelSPeed1)
     Controller1.buttonA.pressed(changeFlywheelSPeed2)
@@ -472,13 +476,9 @@ def regular_start():
     LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
-    while(True):
-        if (locator()):
-            print("spotted")
-            break
+    locator()
     
     flywheelStartup()
-
 
 def autonum():
     global start_on_rollerS
