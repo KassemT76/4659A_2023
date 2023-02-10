@@ -34,9 +34,9 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-SIG_1 = Signature(1, 6035, 7111, 6572, -1345, -475, -910, 3.000, 0)
+RedSignature = Signature(1, 6035, 7111, 6572, -1345, -475, -910, 3.000, 0)
 opticSens = Optical(Ports.PORT11)
-visionSens = Vision(Ports.PORT9, 50, SIG_1)
+visionSens = Vision(Ports.PORT9, 50, RedSignature)
 
 encL = Encoder(brain.three_wire_port.c)
 encL2 = Encoder(brain.three_wire_port.d)
@@ -56,8 +56,6 @@ startUpRPM   = 200
 internalRPM  = 0
 RPMIncrement = 10
 PIDIncrement = 10
-
-RPMDelay     = 0.025   #delay in seconds          tune for startup/shutdown speed
 setSpeed = 2
 RPMDelay     = 0.025
 
@@ -87,12 +85,33 @@ brain.screen.clear_line()
 brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
+class Timer:
+        def __init__(self, id, cd=1200):
+            self.id = id
+            self.cd = cd
+            self.timecodes = [0.0, 0.0, 0.0, 0.0, 0.0]
+
+        def has_passed(self):
+            if(time.time() - self.timecodes[self.id] > self.cd):
+                self.timecodes[self.id] = time.time()
+                return True
+            return False
+
+        def elapsed_time(self):
+            return time.time() - self.timecodes[self.id]
+        
+        def reset(self):
+            self.timecodes[self.id] = 0.0
+
+        def start(self):
+            pass
+
 def initialization():  
     encL.reset_position()
     encL2.reset_position()
     encR.reset_position()
     encR2.reset_position()
-    
+
 def driver_initialization():
     global startUp
     global intakeStatus
@@ -133,70 +152,10 @@ def shutDown():
 #   -PID controls
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-#Find distance travelled
-def odometry():
-    global position, angle, old_left, old_right
-    
-    # FIND DISTANCE TRAVELLED
-    distance_per_rotation = 10.21 # Measurement in INCHES
-    back_tracking_distance = 9.81 # INCHES
-    horizontal_tracking_distance = 3.535 # INCHES
-
-    new_left = encL.value() 
-    new_right = encR.value() 
-
-    d_left = ((new_left - old_left) * distance_per_rotation)/360
-    d_right = ((new_right - old_right) * distance_per_rotation)/360
-
-    #CALCULATE ORIENTATION
-    d_angle = (d_left - d_right) / (2 * horizontal_tracking_distance) # RADIANS
-
-
-    # if angle > math.pi/2 - 0.1 and angle < math.pi/2 + 0.1:
-    #     angle = math.pi/2
-    # elif angle > math.pi - 0.1 and angle < math.pi + 0.1:
-    #     angle = math.pi
-    # elif angle > math.pi*2 - 0.1 and angle < math.pi*2 + 0.1:
-    #     angle = math.pi*2
-    # elif angle > -0.1 and angle < 0.1:
-    #     angle = 0
-
-    if d_angle == 0:
-        position[0] += d_left * math.sin(angle)
-        position[0] += d_left * math.cos(angle)
-    else:
-        side_arc  = 2 * ((d_left/ d_angle) + horizontal_tracking_distance) * math.sin(d_angle / 2)
-        DeltaYSide = side_arc * math.cos(angle + (d_angle / 2))
-        DeltaXSide = side_arc * math.sin(angle + (d_angle / 2))
-        angle += d_angle
-        position[0] += DeltaXSide
-        position[1] += DeltaYSide
-
-    old_left = new_left
-    old_right = new_right
-    d_angle = 0
-
-    # PRINT ENCODER VALUES
-    brain.screen.set_cursor(2,0)
-    brain.screen.clear_line()
-    brain.screen.print("Left Encoder: ", d_left)
-
-    brain.screen.set_cursor(3,0)
-    brain.screen.clear_line()
-    brain.screen.print("Right Encoder: ", d_right)
-
-    brain.screen.set_cursor(4,0)
-    brain.screen.clear_line()
-    brain.screen.print("Middle Encoder: ", encM.value(), encM.value()/360 * distance_per_rotation)
-    
-    brain.screen.set_cursor(5,0)
-    brain.screen.clear_line()
-    brain.screen.print("Position: ", "X", position[0], "Y", position[1])
-
-    brain.screen.set_cursor(6,0)
-    brain.screen.clear_line()
-    brain.screen.print("Orientation: ", angle)
+def ControllerGUI(row, text, var):
+    Controller1.screen.clear_row(0)
+    Controller1.screen.set_cursor(0,0)
+    Controller1.screen.print(text, var)
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
@@ -206,6 +165,11 @@ def intakeControl():  #This is a intake control thread
         Intake.spin(REVERSE, intakeSpeed, RPM)
     else:
         Intake.stop()
+
+def AutonHardCode():
+    LHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
+    RHDrive.spin(FORWARD, 33, VelocityUnits.PERCENT)
+    roller()
 
 def flywheelStartup():
     global Shutdown
@@ -245,7 +209,17 @@ def flywheelKeepSpeed():
             # internalRPM = internalRPM - PIDIncrement
             # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             # brain.screen.print("go down")
-        
+            
+
+def Flywheel_TBH():
+    global flyWheelTargetRpm
+    gain = 1.0
+    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
+    error = flywheelTargetRpm - internalRPM
+    output = flywheelTargetRpm + gain*error
+    Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
+    
+
 def changeFlywheelSPeed1():
     global flywheelTargetRpm
     flywheelTargetRpm = 100
@@ -253,25 +227,6 @@ def changeFlywheelSPeed1():
 def changeFlywheelSPeed2():
     global flywheelTargetRpm
     flywheelTargetRpm = 200
-
-def flywheelStartup():
-    Flywheel.spin(FORWARD, Flywheel.velocity(VelocityUnits.RPM), VelocityUnits.RPM)
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    while internalRPM <= startUpRPM:
-        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-        internalRPM = internalRPM + RPMIncrement
-        wait(RPMDelay, SECONDS)
-    startUp = True
-
-def flywheelShutdown():
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    while internalRPM > 0:
-        Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-        internalRPM = internalRPM - RPMIncrement
-        wait(RPMDelay, SECONDS)
-    Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
-
-#Threading-------------------------------------------------------#
 
 
 # #Driving Controls------------------------------------------------------------------#
@@ -305,7 +260,6 @@ def changeSpeedUp():
 ppos  = 1
 ppos2 = 1
 ppos3 = 1
-
 ppos4 = 1
 
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
@@ -334,8 +288,10 @@ def moveMRight():
     brain.screen.clear_row()
 
     brain.screen.print("Axis 2: ", Controller1.axis2.position())
+    brain.screen.print("Axis 2: ",
+     Controller1.axis2.position())
 
-    brain.screen.print("Axis 2: ", Controller1.axis2.position(), "Velocity: ", RHDrive.velocity() ) 
+   
 
 #IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
 def moveMLeft():
@@ -404,7 +360,7 @@ def roller():
     wait(50)
 
 def locator():
-    x = visionSens.take_snapshot(SIG_1)
+    x = visionSens.take_snapshot(RedSignature)
     if x != None:
         brain.screen.set_cursor(10,0)
         brain.screen.clear_line()
@@ -430,7 +386,8 @@ def locator():
 #   -DRIVER TEMPLATE
 #   -AUTONUM TEMPLATE
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 initialization()
 
 #Competition Templating----------------------------------------------------------------------------------#
@@ -474,7 +431,6 @@ def roller_start():
 
     # Move to disks
     while(True):
-        odometry()
         LHDrive.spin(REVERSE, 15, RPM)
         RHDrive.spin(FORWARD, 15, RPM)
         if angle >= 2.36:
@@ -486,7 +442,6 @@ def roller_start():
 
     # Turn and shoot
     while(True):
-        odometry()
         LHDrive.spin(REVERSE, 15, RPM)
         RHDrive.spin(FORWARD, 15, RPM)
         if angle >= 3.93:
@@ -498,6 +453,13 @@ def roller_start():
     flywheelShoot()
     
 def regular_start():
+    autonHardCodeTimer = Timer(0)
+# def autonHardCode():
+#     global autonHardCodeTimer
+#     while(autonHardCodeTimer.elapsed_time() < 2):
+#         LHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+#         RHDrive.spin(FORWARD, 50, VelocityUnits.PERCENT)
+        
     pass
 
 
@@ -510,12 +472,5 @@ def autonum():
         roller_start()
     else:
         regular_start()
-        if position[1] < 10:
-            LHDrive.spin(FORWARD, 10, RPM)
-            RHDrive.spin(FORWARD, 10, RPM)
-        else:
-            LHDrive.stop()
-            RHDrive.stop()
-            
-#INITIALIZING COMPETITION MODE
+
 comp = Competition(driver, autonum)
