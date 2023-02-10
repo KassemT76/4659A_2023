@@ -372,11 +372,11 @@ def locator():
             brain.screen.set_cursor(10,0)
             brain.screen.clear_line()
             print(x[0].centerX)
-            if x[0].centerX+2 < 130:
+            if x[0].centerX+1 < 130:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
                 
-            elif x[0].centerX+2 > 170:
+            elif x[0].centerX+1 > 170:
                 LHDrive.spin(FORWARD, 10)
                 RHDrive.spin(REVERSE, 10)
 

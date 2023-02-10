@@ -1,9 +1,8 @@
 Autonomous:
 Shooting
 
-Fix Locator Function
-
 Done:
+Fix Locator Function
 locator() function during driver mode
 change flywheel speed
 Movement
