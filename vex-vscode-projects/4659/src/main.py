@@ -12,6 +12,18 @@ from vex import *
 import math 
 import time
 
+# PREGAME CONFIG -----------------------------------------------------------------#
+#
+# INCLUDES
+#
+# - Team Colour
+# - Robot Orientation
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+blue_team =  False
+roller_orientation = False
+
 # CONFIGURATION ------------------------------------------------------------------#
 #
 #   INCLUDES
@@ -75,7 +87,7 @@ intakeSpeed = 200
 #Flywheel
 # shooterActivate = False
 #START ON ROLLER FOR AUTONOMOUS
-start_on_roller = False
+start_on_roller = roller_orientation
 
 #Motor Grouping---------------------------------------------------#
 RHDrive  = MotorGroup(RFFMotor, RFMotor, RRMotor)
@@ -363,7 +375,11 @@ def driver_locator():
 
 def locator():
     while (True):
-        x = visionSens.take_snapshot(RedSignature)
+        x = 0
+        if(blue_team == False):
+            x = visionSens.take_snapshot(RedSignature)
+        else:
+            x = visionSens.take_snapshot(BlueSignature)
         brain.screen.set_cursor(3,0)
         brain.screen.clear_line()
         brain.screen.print(x)
@@ -481,7 +497,7 @@ def regular_start():
     flywheelStartup()
 
 def autonum():
-    global start_on_rollerS
+    global start_on_roller
 
 
     # auton_inititialization()
