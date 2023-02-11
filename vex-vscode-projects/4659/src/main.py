@@ -36,7 +36,7 @@ RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
 RedSignature = Signature(1, -3201, -2091, -2646, 7227, 13637, 10432, 2.400, 0)
-BlueSignature  = Signature(1, 4347, 8243, 6294, -371, 1233, 432, 1.600, 0)
+BlueSignature  = Signature(1, -2299, -607, -1453, 2173, 5499, 3836, 1.700, 0)
 
 opticSens = Optical(Ports.PORT11)
 visionSens = Vision(Ports.PORT10, 150, BlueSignature, RedSignature)
@@ -342,7 +342,8 @@ def driver_locator():
 
 def locator():
     while (True):
-        x = visionSens.take_snapshot(BlueSignature)
+        x = visionSens.largest_object()
+    
         brain.screen.set_cursor(3,0)
         brain.screen.clear_line()
         brain.screen.print(x)
@@ -350,12 +351,12 @@ def locator():
         if x != None:
             brain.screen.set_cursor(10,0)
             brain.screen.clear_line()
-            print(x[0].centerX)
-            if x[0].centerX+1 < 130:
+            print(x.centerX)
+            if x.centerX+1 < 130:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
                 
-            elif x[0].centerX+1 > 170:
+            elif x.centerX+1 > 170:
                 LHDrive.spin(FORWARD, 10)
                 RHDrive.spin(REVERSE, 10)
 
@@ -442,6 +443,8 @@ def roller_start():
     
 def regular_start():
     # 10.21 # Measurement in INCHES
+    
+    global startUpRPM
         
     LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
@@ -450,21 +453,31 @@ def regular_start():
     RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
 
+    intakeButton()
     for i in range(3):
         LHDrive.spin_for(FORWARD, 60, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
         RHDrive.spin_for(FORWARD, 60, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
-        intakeButton()
         LHDrive.spin_for(FORWARD, 30, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
         RHDrive.spin_for(FORWARD, 30, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
-        intakeButton()
+    intakeButton()
     
     LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
     locator()
+
+    temp_startUpRPM = startUpRPM
+    startUpRPM = 350
     
     flywheelStartup()
+    wait(4000, MSEC)
     flywheelShoot()
+
+    wait(7000, MSEC)
+    flywheelShutdown()
+    flywheelShoot()
+
+    startUpRPM = temp_startUpRPM
 
 def autonum():
     global start_on_rollerS

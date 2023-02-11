@@ -1,10 +1,10 @@
 Autonomous:
-Shooting
-Editing
+Shooting (change flywheel rpm)
+Intaking disks
 
 Pneumatics for Expansion
 
-Speed settings
+locator() function for long range
 
 Done:
 Fix Locator Function
