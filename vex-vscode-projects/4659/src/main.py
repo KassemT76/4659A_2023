@@ -35,8 +35,10 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-RedSignature = Signature(1, -3201, -2091, -2646, 7227, 13637, 10432, 2.400, 0)
+RedSignature = Signature(1, 5763, 6739, 6250, -1257, -921, -1090, 8.900, 0)
 BlueSignature  = Signature(1, 4347, 8243, 6294, -371, 1233, 432, 1.600, 0)
+
+
 
 opticSens = Optical(Ports.PORT11)
 visionSens = Vision(Ports.PORT10, 150, BlueSignature, RedSignature)
@@ -180,12 +182,15 @@ def flywheelKeepSpeed():
         if internalRPM < flywheelTargetRpm:
             internalRPM = internalRPM + PIDIncrement
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            brain.screen.set_cursor(10,0)
+            brain.screen.clear_line()
             brain.screen.print("go up")
         else:
-            pass
-            # internalRPM = internalRPM - PIDIncrement
-            # Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            # brain.screen.print("go down")
+            internalRPM = internalRPM - PIDIncrement/2
+            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            brain.screen.set_cursor(10,0)
+            brain.screen.clear_line()
+            brain.screen.print("go down")
             
 
 def Flywheel_TBH():
@@ -197,13 +202,16 @@ def Flywheel_TBH():
     Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
     
 
-def changeFlywheelSPeed1():
+def changeFlywheelSpeed1():
     global flywheelTargetRpm
-    flywheelTargetRpm = 300
+    if flywheelTargetRpm > 100:
+        flywheelTargetRpm = flywheelTargetRpm - 100
+        
 
-def changeFlywheelSPeed2():
+def changeFlywheelSpeed2():
     global flywheelTargetRpm
-    flywheelTargetRpm = 500
+    if flywheelTargetRpm < 400:
+        flywheelTargetRpm = flywheelTargetRpm + 100   
 
 
 # #Driving Controls------------------------------------------------------------------#
@@ -220,18 +228,18 @@ def changeFlywheelSPeed2():
 #Speed Settings-------------------------------------------#
 def changeSpeedDown():
     global setSpeed
-    setSpeed = 2
-    ControllerGUI(1, "Speed", setSpeed)
+    setSpeed = 1
+    ControllerGUI(0, "Speed", setSpeed)
 
 def changeSpeedN():
     global setSpeed
     setSpeed = 3
-    ControllerGUI(1, "Speed", setSpeed)
+    ControllerGUI(0, "Speed", setSpeed)
 
 def changeSpeedUp():
     global setSpeed
     setSpeed = 4
-    ControllerGUI(1, "Speed", setSpeed)
+    ControllerGUI(0, "Speed", setSpeed)
 #Moving the motors----------------------------------------#
 
 ppos  = 1
@@ -386,25 +394,28 @@ def driver():
     #ARROW BUTTONS TO CHANGE SPEED
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
-    Controller1.buttonRight.pressed(changeSpeedN)
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
     Controller1.buttonY.pressed(driver_locator)
-    #flywheel
-    Controller1.buttonX.pressed(changeFlywheelSPeed1)
-    Controller1.buttonA.pressed(changeFlywheelSPeed2)
+    #Flywheel Speed Change
+    Controller1.buttonLeft.pressed(changeFlywheelSpeed1)
+    Controller1.buttonRight.pressed(changeFlywheelSpeed2)
+
     #buttons triggers
-    Controller1.buttonL1.pressed(intakeButton)
-    Controller1.buttonR1.pressed(flywheelStartup)
-    Controller1.buttonR2.pressed(flywheelShoot)
+    #Flywheel Starting and shutting (left)
+    Controller1.buttonL1.pressed(flywheelStartup)
     Controller1.buttonL2.pressed(flywheelShutdown)
+    #Intake and Shooting (right)
+    Controller1.buttonR1.pressed(intakeControl)
+    Controller1.buttonR2.pressed(flywheelShoot)
+    
 
     #turn on odometry
     while True:
         flywheelKeepSpeed()
         brain.screen.set_cursor(8,0)
         brain.screen.clear_row()
-        brain.screen.print(Flywheel.velocity(), intakeStatus)
+        brain.screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
         wait(100)
 
 def roller_start():
