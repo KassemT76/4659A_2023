@@ -57,6 +57,8 @@ BlueSignature  = Signature(1, -2299, -607, -1453, 2173, 5499, 3836, 1.700, 0)
 opticSens = Optical(Ports.PORT11)
 visionSens = Vision(Ports.PORT10, 150, BlueSignature, RedSignature)
 
+pneumatic = Pneumatics(brain.three_wire_port.a)
+
 encL = Encoder(brain.three_wire_port.c)
 encL2 = Encoder(brain.three_wire_port.d)
 encR = Encoder(brain.three_wire_port.a)
@@ -235,9 +237,12 @@ def changeFlywheelSpeed2():
 #   -SPEED CONTROLS
 #   -MOTOR MOVEMENT
 #   -TEST FUNCTION
+#   -PNEUMATIC/EXPANSION
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 #Driving Controls------------------------------------------------------------------#
+def pneumaticRelease():
+    pneumatic.open()
 
 #Speed Settings-------------------------------------------#
 def changeSpeedDown():
@@ -415,6 +420,7 @@ def driver():
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
     Controller1.buttonB.pressed(roller)
     Controller1.buttonY.pressed(driver_locator)
+    Controller1.buttonX.pressed(pneumaticRelease)
     #Flywheel Speed Change
     Controller1.buttonLeft.pressed(changeFlywheelSpeed1)
     Controller1.buttonRight.pressed(changeFlywheelSpeed2)
