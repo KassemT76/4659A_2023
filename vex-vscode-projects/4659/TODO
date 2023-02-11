@@ -1,7 +1,13 @@
 Autonomous:
-Shooting
+Shooting (change flywheel rpm)
+Intaking disks
+
+Pneumatics for Expansion
+
+locator() function for long range
 
 Done:
+Fix Locator Function
 locator() function during driver mode
 change flywheel speed
 Movement
