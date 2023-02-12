@@ -369,7 +369,7 @@ def driver_locator():
 
 def locator():
     while (True):
-        x = 0
+        x = None
         if(blue_team == False):
             x = visionSens.take_snapshot(RedSignature)
         else:
