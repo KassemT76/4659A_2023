@@ -53,7 +53,7 @@ BlueSignature = Signature(1, 4995, 6031, 5512, -215, 391, 88, 4.400, 0)
 opticSens = Optical(Ports.PORT11)
 visionSens = Vision(Ports.PORT10, 70, BlueSignature, RedSignature)
 
-expansionPiston = Pneumatics(brain.three_wire_port.a)
+pneumatic = Pneumatics(brain.three_wire_port.a)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
