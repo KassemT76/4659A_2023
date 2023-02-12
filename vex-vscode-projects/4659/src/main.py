@@ -35,22 +35,13 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-RedSignature = Signature(1, 5763, 6739, 6250, -1257, -921, -1090, 8.900, 0)
-BlueSignature  = Signature(1, 4347, 8243, 6294, -371, 1233, 432, 1.600, 0)
-
-
-RedSignature = Signature(1, -3201, -2091, -2646, 7227, 13637, 10432, 2.400, 0)
-BlueSignature  = Signature(1, -2299, -607, -1453, 2173, 5499, 3836, 1.700, 0)
+RedSignature = Signature(1, 4995, 6031, 5512, -215, 391, 88, 4.400, 0)
+BlueSignature = Signature(1, 4995, 6031, 5512, -215, 391, 88, 4.400, 0)
 
 opticSens = Optical(Ports.PORT11)
-visionSens = Vision(Ports.PORT10, 150, BlueSignature, RedSignature)
+visionSens = Vision(Ports.PORT10, 70, BlueSignature, RedSignature)
 
-encL = Encoder(brain.three_wire_port.c)
-encL2 = Encoder(brain.three_wire_port.d)
-encR = Encoder(brain.three_wire_port.a)
-encR2 = Encoder(brain.three_wire_port.b)
-encM = Encoder(brain.three_wire_port.e)
-encM2 = Encoder(brain.three_wire_port.f)
+expansionPiston = Pneumatics(brain.three_wire_port.a)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
@@ -93,11 +84,8 @@ brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
 def initialization():  
-    encL.reset_position()
-    encL2.reset_position()
-    encR.reset_position()
-    encR2.reset_position()
-
+    print("init")
+    
 def driver_initialization():
     global startUp
     global intakeStatus
@@ -193,16 +181,6 @@ def flywheelKeepSpeed():
             brain.screen.set_cursor(10,0)
             brain.screen.clear_line()
             brain.screen.print("go down")
-            
-
-def Flywheel_TBH():
-    global flyWheelTargetRpm
-    gain = 1.0
-    internalRPM = Flywheel.velocity(VelocityUnits.RPM)
-    error = flywheelTargetRpm - internalRPM
-    output = flywheelTargetRpm + gain*error
-    Flywheel.spin(FORWARD, output, VelocityUnits.RPM)
-    
 
 def changeFlywheelSpeed1():
     global flywheelTargetRpm
@@ -323,7 +301,7 @@ def intakeButton():
 def flywheelShoot():
     global intakeStatus, intakeSpeed
 
-    intakeStatus = not intakeStatus
+    intakeStatus = not(intakeStatus)
     if intakeStatus == True:
         Intake.spin(FORWARD, 40, RPM)
     else:
@@ -352,21 +330,21 @@ def driver_locator():
 
 def locator():
     while (True):
-        x = visionSens.largest_object()
+        x = visionSens.take_snapshot(RedSignature)
     
         brain.screen.set_cursor(3,0)
         brain.screen.clear_line()
-        brain.screen.print(x)
+        brain.screen.print(x[0])
 
         if x != None:
             brain.screen.set_cursor(10,0)
             brain.screen.clear_line()
-            print(x.centerX)
-            if x.centerX+1 < 130:
+            print(x[0].centerX)
+            if x[0].centerX+1 < 130:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
                 
-            elif x.centerX+1 > 170:
+            elif x[0].centerX+1 > 170:
                 LHDrive.spin(FORWARD, 10)
                 RHDrive.spin(REVERSE, 10)
 
@@ -390,6 +368,7 @@ initialization()
 
 #Competition Templating----------------------------------------------------------------------------------#
 def driver():
+    global flywheelTargetRpm
     # driver_initialization()
     #LISTENS FOR A CHANGE IN JOYSTICKS
     Controller1.axis2.changed(moveMRight)
@@ -419,7 +398,8 @@ def driver():
         brain.screen.set_cursor(8,0)
         brain.screen.clear_row()
         brain.screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
-        ControllerGUI(0, "Velocity", Flywheel.velocity())
+        ControllerGUI(0, "Velocity", round(Flywheel.velocity()))
+        Controller1.screen.print(" ",flywheelTargetRpm)
         wait(100)
 
 def roller_start():
