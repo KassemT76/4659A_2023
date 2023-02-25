@@ -18,8 +18,7 @@ import time
 #
 # - Team Colour
 # - Robot Orientation
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#  # # # # # # # # # # # # # # # # # #
 
 blue_team =  False
 roller_orientation = False
@@ -47,18 +46,17 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-RedSignature = Signature(1, 4995, 6031, 5512, -215, 391, 88, 4.400, 0)
-BlueSignature = Signature(1, 4995, 6031, 5512, -215, 391, 88, 4.400, 0)
+RedSignature = Signature(1, 7135, 9669, 8402, -2809, -929, -1869, 3.000, 0)
+BlueSignature = Signature(2, -3131, -2025, -2578, 7885, 10497, 9191, 3.000, 0)
 
 opticSens = Optical(Ports.PORT11)
 visionSens = Vision(Ports.PORT10, 70, BlueSignature, RedSignature)
 
-pneumatic = Pneumatics(brain.three_wire_port.a)
+pneumatic = Pneumatics(brain.three_wire_port.h)
 
 #Program Internal Constants--------(Don't screw arround with this if you don't know what you are doing.)-----------#
 intakeStatus = False   #Switch for turning on and off intake. Set this variable to False in your code if u wanna switch it off.
-flywheelTargetRpm  = 300     #The only thing that should touch this variable, is the flywheel control program, and the physics equation
-
+flywheelTargetRpm  = 200     #The only thing that should touch this variable, is the flywheel control program, and the physics equation
 #DO NOT TOUCH U CAN DESTROY HARDWARE If you think this is an issue ask Gavin before changing stuff. (Gavin's Notes: Used for controlling startup and shutdown of flywheel)
 startUp      = False #False is flywheel startup not complete, True is complete
 Shutdown     = False #Used for shutting down flywheel
@@ -97,6 +95,7 @@ brain.screen.print("Information: ")
 
 def initialization():  
     print("init")
+    pneumatic.close()
     
 def driver_initialization():
     global startUp
@@ -106,10 +105,6 @@ def driver_initialization():
 
     startUp = False
     flywheelStartup()
-
-    intakeStatus = True
-    # intakeControl()
-    
     
 def auton_inititialization():
     global startUp
@@ -194,16 +189,16 @@ def flywheelKeepSpeed():
             brain.screen.clear_line()
             brain.screen.print("go down")
 
-def changeFlywheelSpeed1():
+def changeFlywheelSpeedDecrease():
     global flywheelTargetRpm
-    if flywheelTargetRpm > 100:
-        flywheelTargetRpm = flywheelTargetRpm - 100
+    if flywheelTargetRpm > 50:
+        flywheelTargetRpm = flywheelTargetRpm - 50
         
 
-def changeFlywheelSpeed2():
+def changeFlywheelSpeedIncrease():
     global flywheelTargetRpm
     if flywheelTargetRpm < 400:
-        flywheelTargetRpm = flywheelTargetRpm + 100   
+        flywheelTargetRpm = flywheelTargetRpm + 50   
 
 
 # #Driving Controls------------------------------------------------------------------#
@@ -226,11 +221,6 @@ def changeSpeedDown():
     setSpeed = 1
     ControllerGUI(0, "Speed", setSpeed)
 
-def changeSpeedN():
-    global setSpeed
-    setSpeed = 3
-    ControllerGUI(0, "Speed", setSpeed)
-
 def changeSpeedUp():
     global setSpeed
     setSpeed = 4
@@ -243,61 +233,9 @@ ppos3 = 1
 ppos4 = 1
 
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
-def moveMRight():
-    global ppos
-    global ppos2
-    #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos = round(Controller1.axis2.position() / 1.5)
-    #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
-    if pos < 0:
-        RHDrive.spin(REVERSE)
-        if pos < ppos:
-            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-        ppos = int(pos/10+0.99)*10
-    elif pos > 0:
-        RHDrive.spin(FORWARD)
-        if pos > ppos2:
-            RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-        ppos2 = int(pos/10+0.99)*10
-    else:
-        RHDrive.set_velocity(0, PERCENT)
-        RHDrive.spin(REVERSE)
-        RHDrive.set_velocity((pos/4)*setSpeed, PERCENT)
-    #PRINTS INFO
-    brain.screen.set_cursor(7,0)
-    brain.screen.clear_row()
-
-    brain.screen.print("Axis 2: ", Controller1.axis2.position())
-    brain.screen.print("Axis 2: ",
-     Controller1.axis2.position())
-
-   
-
-#IS CALLED WHEN AXIS3 (LEFT JOYSTICK - VERTICAL) IS CHANGED
-def moveMLeft():
-    global ppos3
-    global ppos4
-    #DEFINE POSITION OF CONTROLLER JOYSTICK
-    pos1 = round(Controller1.axis3.position() / 1.5)
-    #WHEN POS IS < 0 IT IS POINTING DOWN AND WE MOVE REVERSE
-
-    if pos1 < 0:
-        LHDrive.spin(REVERSE)
-        if pos1 < ppos3:
-            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
-        
-    elif pos1 > 0:
-        LHDrive.spin(FORWARD)
-        if pos1 > ppos4:
-            LHDrive.set_velocity((pos1/4)*setSpeed, PERCENT)
-    else:
-        LHDrive.set_velocity(0, PERCENT)
-    ppos3 = int(pos1/10+0.99)*10
-    ppos4 = int(pos1/10+0.99)*10
-    #PRINTS INFO
-    brain.screen.set_cursor(8,0)
-    brain.screen.clear_row()
-    brain.screen.print("Axis 3: ", Controller1.axis3.position())
+def moveDrivetrain():
+   LHDrive.spin(FORWARD, (Controller1.axis3.position()+Controller1.axis1.position()/2)*0.25*setSpeed, VelocityUnits.PERCENT)
+   RHDrive.spin(FORWARD, (Controller1.axis3.position()-Controller1.axis1.position()/2)*0.25*setSpeed, VelocityUnits.PERCENT)
 
 # #Autonum Controls------------------------------------------------------------------#
 #
@@ -345,15 +283,11 @@ def driver_locator():
 
 def locator():
     while (True):
-        x = None
-        if(blue_team == False):
-            x = visionSens.take_snapshot(RedSignature)
-        else:
+        if(blue_team):
             x = visionSens.take_snapshot(BlueSignature)
-        brain.screen.set_cursor(3,0)
-        brain.screen.clear_line()
-        brain.screen.print(x[0])
-
+        else:
+            x = visionSens.take_snapshot(RedSignature)
+        
         if x != None:
             brain.screen.set_cursor(10,0)
             brain.screen.clear_line()
@@ -387,10 +321,10 @@ initialization()
 #Competition Templating----------------------------------------------------------------------------------#
 def driver():
     global flywheelTargetRpm
-    # driver_initialization()
-    #LISTENS FOR A CHANGE IN JOYSTICKS
-    Controller1.axis2.changed(moveMRight)
-    Controller1.axis3.changed(moveMLeft)
+
+    driver_initialization()
+
+    Controller1.axis1.changed(moveDrivetrain)
     #ARROW BUTTONS TO CHANGE SPEED
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
@@ -399,21 +333,22 @@ def driver():
     Controller1.buttonY.pressed(driver_locator)
     Controller1.buttonX.pressed(pneumaticRelease)
     #Flywheel Speed Change
-    Controller1.buttonLeft.pressed(changeFlywheelSpeed1)
-    Controller1.buttonRight.pressed(changeFlywheelSpeed2)
+    Controller1.buttonLeft.pressed(changeFlywheelSpeedDecrease) 
+    Controller1.buttonRight.pressed(changeFlywheelSpeedIncrease)
 
     #buttons triggers
     #Flywheel Starting and shutting (left)
     Controller1.buttonL1.pressed(flywheelStartup)
     Controller1.buttonL2.pressed(flywheelShutdown)
     #Intake and Shooting (right)
-    Controller1.buttonR1.pressed(intakeControl)
+    Controller1.buttonR1.pressed(intakeButton)
     Controller1.buttonR2.pressed(flywheelShoot)
     
 
     #turn on odometry
     while True:
         flywheelKeepSpeed()
+        moveDrivetrain()
         brain.screen.set_cursor(8,0)
         brain.screen.clear_row()
         brain.screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
@@ -429,7 +364,6 @@ def roller_start():
     LHDrive.spin_for(FORWARD, 90)
     RHDrive.spin_for(FORWARD, 90)
     Intake.spin(FORWARD, intakeSpeed, RPM)
-
 
     # Move to disks
     while(True):
@@ -494,14 +428,13 @@ def regular_start():
 
 def autonum():
     global start_on_roller
+ 
+    auton_inititialization()
 
-
-    # auton_inititialization()
-
-    if start_on_roller:
-        roller_start()
-    else:
-        regular_start()
+    # if start_on_roller:
+    #     # roller_start()
+    #     get_out_start()
+    # else:
+    #     regular_start()
 
 comp = Competition(driver, autonum)
-                                             
