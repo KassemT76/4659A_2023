@@ -94,7 +94,6 @@ brain.screen.set_cursor(1,0)
 brain.screen.print("Information: ")
 
 def initialization():  
-    print("init")
     pneumatic.close()
     
 def driver_initialization():
@@ -133,10 +132,15 @@ def shutDown():
 #   -PID controls
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-def ControllerGUI(row, text, var):
+def ControllerGUI(text, var):
     Controller1.screen.clear_row(0)
     Controller1.screen.set_cursor(0,0)
     Controller1.screen.print(text, var)
+
+def logger(row, text, var):
+    brain.screen.clear_row(0)
+    brain.screen.set_cursor(row,0)
+    brain.screen.print(text, var)
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
@@ -179,13 +183,13 @@ def flywheelKeepSpeed():
         if internalRPM < flywheelTargetRpm:
             internalRPM = internalRPM + PIDIncrement
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            brain.screen.set_cursor(10,0)
+            brain.screen.set_cursor(2,0)
             brain.screen.clear_line()
             brain.screen.print("go up")
         else:
             internalRPM = internalRPM - PIDIncrement/2
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            brain.screen.set_cursor(10,0)
+            brain.screen.set_cursor(2,0)
             brain.screen.clear_line()
             brain.screen.print("go down")
 
@@ -219,18 +223,13 @@ def pneumaticRelease():
 def changeSpeedDown():
     global setSpeed
     setSpeed = 1
-    ControllerGUI(0, "Speed", setSpeed)
+    ControllerGUI("Speed", setSpeed)
 
 def changeSpeedUp():
     global setSpeed
     setSpeed = 4
-    ControllerGUI(0, "Speed", setSpeed)
+    ControllerGUI("Speed", setSpeed)
 #Moving the motors----------------------------------------#
-
-ppos  = 1
-ppos2 = 1
-ppos3 = 1
-ppos4 = 1
 
 #IS CALLED WHEN AXIS2 (RIGHT JOYSTICK - VERTICAL) IS CHANGED
 def moveDrivetrain():
@@ -256,7 +255,7 @@ def flywheelShoot():
 
     intakeStatus = not(intakeStatus)
     if intakeStatus == True:
-        Intake.spin(FORWARD, 40, RPM)
+        Intake.spin(FORWARD, 75, RPM)
     else:
         Intake.stop()
     
@@ -289,9 +288,7 @@ def locator():
             x = visionSens.take_snapshot(RedSignature)
         
         if x != None:
-            brain.screen.set_cursor(10,0)
-            brain.screen.clear_line()
-            print(x[0].centerX)
+            logger(10, "Camera", x)
             if x[0].centerX+1 < 130:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
@@ -349,11 +346,15 @@ def driver():
     while True:
         flywheelKeepSpeed()
         moveDrivetrain()
-        brain.screen.set_cursor(8,0)
+
+        brain.screen.set_cursor(3,0)
         brain.screen.clear_row()
         brain.screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
-        ControllerGUI(0, "Velocity", round(Flywheel.velocity()))
+
+        ControllerGUI("Velocity", round(Flywheel.velocity()))
+
         Controller1.screen.print(" ",flywheelTargetRpm)
+
         wait(100)
 
 def roller_start():
