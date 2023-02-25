@@ -36,7 +36,7 @@ Controller1    = Controller()
 
 Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , False  )    #Do not change gear ratio
 
-Intake         = Motor(Ports.PORT8, GearSetting.RATIO_36_1 , True  )    
+Intake         = Motor(Ports.PORT8, GearSetting.RATIO_18_1 , True  )    
 
 LFFMotor       = Motor(Ports.PORT5, GearSetting.RATIO_36_1 , False )
 LFMotor        = Motor(Ports.PORT1, GearSetting.RATIO_36_1 , True )
@@ -392,7 +392,11 @@ def regular_start():
     # 10.21 # Measurement in INCHES
     
     global startUpRPM
-        
+    temp_startUpRPM = startUpRPM
+    startUpRPM = 350
+    
+    flywheelStartup()
+
     LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
@@ -413,16 +417,10 @@ def regular_start():
     
     locator()
 
-    temp_startUpRPM = startUpRPM
-    startUpRPM = 350
-    
-    flywheelStartup()
-    wait(4000, MSEC)
     flywheelShoot()
 
     wait(7000, MSEC)
     flywheelShutdown()
-    flywheelShoot()
 
     startUpRPM = temp_startUpRPM
 
@@ -433,7 +431,6 @@ def autonum():
 
     # if start_on_roller:
     #     # roller_start()
-    #     get_out_start()
     # else:
     #     regular_start()
 
