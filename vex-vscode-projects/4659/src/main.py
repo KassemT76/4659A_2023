@@ -20,7 +20,7 @@ import time
 # - Robot Orientation
 #  # # # # # # # # # # # # # # # # # #
 
-blue_team =  False
+blue_team =  True
 roller_orientation = False
 
 # CONFIGURATION ------------------------------------------------------------------#
@@ -79,6 +79,9 @@ angle = 0
 intakeSpeed = 200
 #Flywheel
 # shooterActivate = False
+offset = 5
+lowerBound = 145
+upperBound = 155
 #START ON ROLLER FOR AUTONOMOUS
 start_on_roller = roller_orientation
 
@@ -138,7 +141,7 @@ def ControllerGUI(text, var):
     Controller1.screen.print(text, var)
 
 def logger(row, text, var):
-    brain.screen.clear_row(0)
+    brain.screen.clear_row(row)
     brain.screen.set_cursor(row,0)
     brain.screen.print(text, var)
 
@@ -281,6 +284,7 @@ def driver_locator():
     locator()
 
 def locator():
+    global offset, upperBound, lowerBound
     while (True):
         if(blue_team):
             x = visionSens.take_snapshot(BlueSignature)
@@ -289,11 +293,11 @@ def locator():
         
         if x != None:
             logger(10, "Camera", x)
-            if x[0].centerX+1 < 130:
+            if x[0].centerX+offset < lowerBound:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
                 
-            elif x[0].centerX+1 > 170:
+            elif x[0].centerX+offset > upperBound:
                 LHDrive.spin(FORWARD, 10)
                 RHDrive.spin(REVERSE, 10)
 
@@ -393,6 +397,8 @@ def regular_start():
     # 10.21 # Measurement in INCHES
     
     global startUpRPM
+    global intakeStatus
+
     temp_startUpRPM = startUpRPM
     startUpRPM = 350
     
@@ -417,10 +423,11 @@ def regular_start():
     RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
     locator()
-
+    logger(9, "Done", intakeStatus)
+    intakeStatus = False
     flywheelShoot()
 
-    wait(7000, MSEC)
+
     flywheelShutdown()
 
     startUpRPM = temp_startUpRPM
@@ -429,10 +436,7 @@ def autonum():
     global start_on_roller
  
     auton_inititialization()
+    regular_start()
 
-    # if start_on_roller:
-    #     # roller_start()
-    # else:
-    #     regular_start()
 
 comp = Competition(driver, autonum)
