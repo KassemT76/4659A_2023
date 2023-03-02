@@ -21,9 +21,11 @@ from vex import *
 blue_team =  True
 start_on_roller = False
 
-offset = 5
+offset = 8
 lowerBound = 147
 upperBound = 153
+integral = 0
+prev_error = 0
 
 # CONFIGURATION ------------------------------------------------------------------#
 #
@@ -42,7 +44,7 @@ else:
     team =  Color.RED 
 
 brain          = Brain()
-Screen         = Brain.Lcd()
+Screen         = brain.screen
 Controller1    = Controller()
 
 Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , False  )    #Do not change gear ratio
@@ -182,23 +184,20 @@ def flywheelShutdown():
         wait(RPMDelay, SECONDS)
     Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
 
+def pid_control(target_rpm, current_rpm, Kp, Ki, Kd, dt):
+    global integral, prev_error
+    error = target_rpm - current_rpm
+    integral = integral + error * dt
+    derivative = (error - prev_error) / dt
+    output = Kp * error + Ki * integral + Kd * derivative
+    prev_error = error
+    return output
+
 def flywheelKeepSpeed():
-    internalRPM = Flywheel.velocity(RPM)
     global flywheelTargetRpm
-    #while internalRPM > flywheelTargetRpm + 10 or internalRPM < flywheelTargetRpm - 10:
     if startUp == True and Shutdown == False:
-        if internalRPM < flywheelTargetRpm:
-            internalRPM = internalRPM + RPMIncrement
-            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            Screen.set_cursor(2,0)
-            Screen.clear_line()
-            Screen.print("go up")
-        else:
-            internalRPM = internalRPM - RPMIncrement/2
-            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            Screen.set_cursor(2,0)
-            Screen.clear_line()
-            Screen.print("go down")
+        Flywheel.set_velocity(pid_control(flywheelTargetRpm,Flywheel.velocity(),1,0.1,0.1,0.01), VelocityUnits.RPM)
+        
 
 def changeFlywheelSpeedDecrease():
     global flywheelTargetRpm
@@ -261,7 +260,7 @@ def flywheelShoot():
         Intake.stop()
 
 def driver_locator():
-    locator()
+    refined_locator()
 
 # #Autonum Controls------------------------------------------------------------------#
 #
@@ -299,10 +298,11 @@ def refined_locator():
         
         if x != None:
             logger(10, "Camera", x)
+            if not(x[i].exists):
+                    logger(5, "Not exists", x[i-1])
+                    break
             if x[i].centerX < leftBound or x[i].centerX > rightBound:
                 i+=1
-                if not(x[i].exists):
-                    logger(5, "Not exists", x[i-1])
             if x[i].centerX+offset < lowerBound:
                 LHDrive.spin(REVERSE, 10)
                 RHDrive.spin(FORWARD, 10)
@@ -393,7 +393,7 @@ def driver():
 
         ControllerGUI("Velocity", round(Flywheel.velocity()))
 
-        Controller1.screen.print(" ", setSpeed)
+        Controller1.screen.print(" ", flywheelTargetRpm, setSpeed)
 
         wait(100)
 
