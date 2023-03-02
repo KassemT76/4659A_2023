@@ -9,8 +9,6 @@
 
 # Library imports
 from vex import *
-import math 
-import time
 
 # PREGAME CONFIG -----------------------------------------------------------------#
 #
@@ -21,7 +19,11 @@ import time
 #  # # # # # # # # # # # # # # # # # #
 
 blue_team =  True
-roller_orientation = False
+start_on_roller = False
+
+offset = 5
+lowerBound = 147
+upperBound = 153
 
 # CONFIGURATION ------------------------------------------------------------------#
 #
@@ -31,6 +33,14 @@ roller_orientation = False
 #   -Calibration
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+if blue_team:
+    opp_team = Color.RED 
+    team = Color.BLUE 
+    #Blue seen with sensor = Color("00FFFF")
+else:
+    opp_team = Color.BLUE # 
+    team =  Color.RED 
+
 brain          = Brain()
 Controller1    = Controller()
 
@@ -46,11 +56,12 @@ RFFMotor       = Motor(Ports.PORT6, GearSetting.RATIO_36_1 , True )
 RFMotor        = Motor(Ports.PORT3, GearSetting.RATIO_36_1 , False  )
 RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 
-RedSignature = Signature(1, 7135, 9669, 8402, -2809, -929, -1869, 3.000, 0)
-BlueSignature = Signature(2, -3131, -2025, -2578, 7885, 10497, 9191, 3.000, 0)
+RedSignature = Signature(1, 3201, 9325, 6264, -1117, 295, -412, 1.200, 0)
+BlueSignature = Signature(2, -3133, 817, -1158, 249, 8683, 4466, 0.600, 0)
+
 
 opticSens = Optical(Ports.PORT11)
-visionSens = Vision(Ports.PORT10, 70, BlueSignature, RedSignature)
+visionSens = Vision(Ports.PORT10, 85, RedSignature, BlueSignature)
 
 pneumatic = Pneumatics(brain.three_wire_port.h)
 
@@ -61,29 +72,12 @@ flywheelTargetRpm  = 200     #The only thing that should touch this variable, is
 startUp      = False #False is flywheel startup not complete, True is complete
 Shutdown     = False #Used for shutting down flywheel
 startUpRPM   = 200
-internalRPM  = 0
 RPMIncrement = 10
-PIDIncrement = 10
-setSpeed = 2
+setSpeed     = 2
 RPMDelay     = 0.025
 
-#Changable globals
-team = Color.RED # Color.RED for RED, Color.BlUE for BLUE
-opp_team = Color.BLUE # 
-position = [0.0, 0.0]
-#Odometry
-old_left = 0
-old_right = 0
-angle = 0
 #Intake
 intakeSpeed = 200
-#Flywheel
-# shooterActivate = False
-offset = 5
-lowerBound = 145
-upperBound = 155
-#START ON ROLLER FOR AUTONOMOUS
-start_on_roller = roller_orientation
 
 #Motor Grouping---------------------------------------------------#
 RHDrive  = MotorGroup(RFFMotor, RFMotor, RRMotor)
@@ -145,6 +139,19 @@ def logger(row, text, var):
     brain.screen.set_cursor(row,0)
     brain.screen.print(text, var)
 
+def buttons():
+    brain.screen.draw_rectangle(100, 100, 100, 50, Color.RED)
+    brain.screen.draw_rectangle(250, 100, 100, 50, Color.BLUE)
+
+def buttonPressed():
+    global blue_team
+    if brain.screen.x_position() > 100 and brain.screen.x_position() < 200 and brain.screen.y_position() > 100 and brain.screen.y_position() < 150: 
+        logger(4,"Red", brain.screen.x_position())
+        blue_team = False
+    if brain.screen.x_position() > 250 and brain.screen.x_position() < 350 and brain.screen.y_position() > 100 and brain.screen.y_position() < 150: 
+        logger(5,"Blue", brain.screen.x_position())
+        blue_team = True
+
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
     global intakeStatus, intakeSpeed
@@ -184,13 +191,13 @@ def flywheelKeepSpeed():
     #while internalRPM > flywheelTargetRpm + 10 or internalRPM < flywheelTargetRpm - 10:
     if startUp == True and Shutdown == False:
         if internalRPM < flywheelTargetRpm:
-            internalRPM = internalRPM + PIDIncrement
+            internalRPM = internalRPM + RPMIncrement
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             brain.screen.set_cursor(2,0)
             brain.screen.clear_line()
             brain.screen.print("go up")
         else:
-            internalRPM = internalRPM - PIDIncrement/2
+            internalRPM = internalRPM - RPMIncrement/2
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
             brain.screen.set_cursor(2,0)
             brain.screen.clear_line()
@@ -263,15 +270,16 @@ def flywheelShoot():
         Intake.stop()
     
 def roller():
-    global team, intakeSpeed
+    global opp_team, team, intakeSpeed
     opticColor = opticSens.color() 
+    
 
     if opticColor == opp_team:
         Intake.spin(FORWARD, intakeSpeed, RPM)   
 
     brain.screen.set_cursor(9,0)
     brain.screen.clear_line()
-    brain.screen.print("Color ", opticColor)
+    brain.screen.print("Color ", opticColor, opp_team, team)
 
     if opticColor == team:
         # CHANGE TO NOT INTERFERE WITH INDEXER
@@ -344,12 +352,13 @@ def driver():
     #Intake and Shooting (right)
     Controller1.buttonR1.pressed(intakeButton)
     Controller1.buttonR2.pressed(flywheelShoot)
-    
 
+    buttons()
     #turn on odometry
     while True:
         flywheelKeepSpeed()
         moveDrivetrain()
+        buttonPressed()
 
         brain.screen.set_cursor(3,0)
         brain.screen.clear_row()
@@ -362,36 +371,7 @@ def driver():
         wait(100)
 
 def roller_start():
-    # Perform Roller Job
-    LHDrive.spin_for(REVERSE, 90)
-    RHDrive.spin_for(REVERSE, 90)
     roller()
-    LHDrive.spin_for(FORWARD, 90)
-    RHDrive.spin_for(FORWARD, 90)
-    Intake.spin(FORWARD, intakeSpeed, RPM)
-
-    # Move to disks
-    while(True):
-        LHDrive.spin(REVERSE, 15, RPM)
-        RHDrive.spin(FORWARD, 15, RPM)
-        if angle >= 2.36:
-            break
-
-    LHDrive.spin_for(FORWARD, 1080)
-    RHDrive.spin_for(FORWARD, 1080)
-
-
-    # Turn and shoot
-    while(True):
-        LHDrive.spin(REVERSE, 15, RPM)
-        RHDrive.spin(FORWARD, 15, RPM)
-        if angle >= 3.93:
-            break
-    
-
-    flywheelShoot()
-    wait(200)
-    flywheelShoot()
     
 def regular_start():
     # 10.21 # Measurement in INCHES
@@ -407,8 +387,8 @@ def regular_start():
     LHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 270, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
-    LHDrive.spin_for(REVERSE, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    RHDrive.spin_for(FORWARD, 50, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(REVERSE, 55, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 55, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
 
 
     intakeButton()
@@ -419,8 +399,8 @@ def regular_start():
         RHDrive.spin_for(FORWARD, 30, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     intakeButton()
     
-    LHDrive.spin_for(REVERSE, 100 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
-    RHDrive.spin_for(FORWARD, 100, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
+    LHDrive.spin_for(REVERSE, 120 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
+    RHDrive.spin_for(FORWARD, 120, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
     locator()
     logger(9, "Done", intakeStatus)
@@ -436,7 +416,10 @@ def autonum():
     global start_on_roller
  
     auton_inititialization()
-    regular_start()
+    if start_on_roller:
+        roller_start:
+    else:
+        regular_start()
 
 
 comp = Competition(driver, autonum)
