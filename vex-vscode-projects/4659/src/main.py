@@ -42,6 +42,7 @@ else:
     team =  Color.RED 
 
 brain          = Brain()
+Screen         = Brain.Lcd()
 Controller1    = Controller()
 
 Flywheel      = Motor(Ports.PORT9, GearSetting.RATIO_6_1  , False  )    #Do not change gear ratio
@@ -59,9 +60,8 @@ RRMotor        = Motor(Ports.PORT4, GearSetting.RATIO_36_1 , False )
 RedSignature = Signature(1, 3201, 9325, 6264, -1117, 295, -412, 1.200, 0)
 BlueSignature = Signature(2, -3133, 817, -1158, 249, 8683, 4466, 0.600, 0)
 
-
 opticSens = Optical(Ports.PORT11)
-visionSens = Vision(Ports.PORT10, 85, RedSignature, BlueSignature)
+visionSens = Vision(Ports.PORT10, 90, RedSignature, BlueSignature)
 
 pneumatic = Pneumatics(brain.three_wire_port.h)
 
@@ -84,11 +84,11 @@ RHDrive  = MotorGroup(RFFMotor, RFMotor, RRMotor)
 LHDrive  = MotorGroup(LFFMotor, LFMotor, LRMotor)
 
 #First print
-brain.screen.print("Program Loaded!")
+Screen.print("Program Loaded!")
 #Information header
-brain.screen.clear_line()
-brain.screen.set_cursor(1,0)
-brain.screen.print("Information: ")
+Screen.clear_line()
+Screen.set_cursor(1,0)
+Screen.print("Information: ")
 
 def initialization():  
     pneumatic.close()
@@ -111,9 +111,6 @@ def auton_inititialization():
     startUp = False
     flywheelStartup()
 
-    intakeStatus = True
-    intakeControl()
-
 
 def shutDown():
     LHDrive.stop()
@@ -124,7 +121,7 @@ def shutDown():
 # Low Level Services ------------------------------------------------------------------#
 #
 #   INCLUDES
-#
+#   -GUI
 #   -Odometry
 #   -PID controls
 #
@@ -135,21 +132,21 @@ def ControllerGUI(text, var):
     Controller1.screen.print(text, var)
 
 def logger(row, text, var):
-    brain.screen.clear_row(row)
-    brain.screen.set_cursor(row,0)
-    brain.screen.print(text, var)
+    Screen.clear_row(row)
+    Screen.set_cursor(row,0)
+    Screen.print(text, var)
 
 def buttons():
-    brain.screen.draw_rectangle(100, 100, 100, 50, Color.RED)
-    brain.screen.draw_rectangle(250, 100, 100, 50, Color.BLUE)
+    Screen.draw_rectangle(100, 100, 100, 50, Color.RED)
+    Screen.draw_rectangle(250, 100, 100, 50, Color.BLUE)
 
 def buttonPressed():
     global blue_team
-    if brain.screen.x_position() > 100 and brain.screen.x_position() < 200 and brain.screen.y_position() > 100 and brain.screen.y_position() < 150: 
-        logger(4,"Red", brain.screen.x_position())
+    if Screen.x_position() > 100 and Screen.x_position() < 200 and Screen.y_position() > 100 and Screen.y_position() < 150: 
+        logger(4,"Red", Screen.x_position())
         blue_team = False
-    if brain.screen.x_position() > 250 and brain.screen.x_position() < 350 and brain.screen.y_position() > 100 and brain.screen.y_position() < 150: 
-        logger(5,"Blue", brain.screen.x_position())
+    if Screen.x_position() > 250 and Screen.x_position() < 350 and Screen.y_position() > 100 and Screen.y_position() < 150: 
+        logger(5,"Blue", Screen.x_position())
         blue_team = True
 
 #Threading-------------------------------------------------------#
@@ -193,15 +190,15 @@ def flywheelKeepSpeed():
         if internalRPM < flywheelTargetRpm:
             internalRPM = internalRPM + RPMIncrement
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            brain.screen.set_cursor(2,0)
-            brain.screen.clear_line()
-            brain.screen.print("go up")
+            Screen.set_cursor(2,0)
+            Screen.clear_line()
+            Screen.print("go up")
         else:
             internalRPM = internalRPM - RPMIncrement/2
             Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
-            brain.screen.set_cursor(2,0)
-            brain.screen.clear_line()
-            brain.screen.print("go down")
+            Screen.set_cursor(2,0)
+            Screen.clear_line()
+            Screen.print("go down")
 
 def changeFlywheelSpeedDecrease():
     global flywheelTargetRpm
@@ -232,12 +229,14 @@ def pneumaticRelease():
 #Speed Settings-------------------------------------------#
 def changeSpeedDown():
     global setSpeed
-    setSpeed = 1
+    if setSpeed >= 1:
+        setSpeed += 1
     ControllerGUI("Speed", setSpeed)
 
 def changeSpeedUp():
     global setSpeed
-    setSpeed = 4
+    if setSpeed <= 4:
+        setSpeed -= 1
     ControllerGUI("Speed", setSpeed)
 #Moving the motors----------------------------------------#
 
@@ -246,14 +245,6 @@ def moveDrivetrain():
    LHDrive.spin(FORWARD, (Controller1.axis3.position()+Controller1.axis1.position()/2)*0.25*setSpeed, VelocityUnits.PERCENT)
    RHDrive.spin(FORWARD, (Controller1.axis3.position()-Controller1.axis1.position()/2)*0.25*setSpeed, VelocityUnits.PERCENT)
 
-# #Autonum Controls------------------------------------------------------------------#
-#
-#   INCLUDES
-#
-#   -ROLLER MOVEMENT
-#   -Vision sensors
-#
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def intakeButton():
     global intakeStatus
 
@@ -268,7 +259,18 @@ def flywheelShoot():
         Intake.spin(FORWARD, 75, RPM)
     else:
         Intake.stop()
-    
+
+def driver_locator():
+    locator()
+
+# #Autonum Controls------------------------------------------------------------------#
+#
+#   INCLUDES
+#
+#   -ROLLER MOVEMENT
+#   -Vision sensors
+#
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def roller():
     global opp_team, team, intakeSpeed
     opticColor = opticSens.color() 
@@ -277,20 +279,47 @@ def roller():
     if opticColor == opp_team:
         Intake.spin(FORWARD, intakeSpeed, RPM)   
 
-    brain.screen.set_cursor(9,0)
-    brain.screen.clear_line()
-    brain.screen.print("Color ", opticColor, opp_team, team)
+    Screen.set_cursor(9,0)
+    Screen.clear_line()
+    Screen.print("Color ", opticColor, opp_team, team)
 
     if opticColor == team:
         # CHANGE TO NOT INTERFERE WITH INDEXER
         Intake.stop()
-        
-
     wait(50)
+def refined_locator():
+    i = 0
+    leftBound = 20
+    rightBound = 280
+    while (True):
+        if(blue_team):
+            x = visionSens.take_snapshot(BlueSignature)
+        else:
+            x = visionSens.take_snapshot(RedSignature)
+        
+        if x != None:
+            logger(10, "Camera", x)
+            if x[i].centerX < leftBound or x[i].centerX > rightBound:
+                i+=1
+                if not(x[i].exists):
+                    logger(5, "Not exists", x[i-1])
+            if x[i].centerX+offset < lowerBound:
+                LHDrive.spin(REVERSE, 10)
+                RHDrive.spin(FORWARD, 10)
+                if rightBound > upperBound:
+                    rightBound -= 10
+                
+            elif x[i].centerX+offset > upperBound:
+                LHDrive.spin(FORWARD, 10)
+                RHDrive.spin(REVERSE, 10)
+                if leftBound > lowerBound:
+                    leftBound += 10
 
-def driver_locator():
-    locator()
-
+            else:
+                LHDrive.stop()
+                RHDrive.stop()
+                return True
+            wait(250, MSEC)
 def locator():
     global offset, upperBound, lowerBound
     while (True):
@@ -298,7 +327,7 @@ def locator():
             x = visionSens.take_snapshot(BlueSignature)
         else:
             x = visionSens.take_snapshot(RedSignature)
-        
+        logger(5, "Did it detect?", x)
         if x != None:
             logger(10, "Camera", x)
             if x[0].centerX+offset < lowerBound:
@@ -314,8 +343,6 @@ def locator():
                 RHDrive.stop()
                 return True
 
-        
-        
 # Competition Templates Controls------------------------------------------------------------------#
 #
 #   INCLUDES
@@ -360,15 +387,24 @@ def driver():
         moveDrivetrain()
         buttonPressed()
 
-        brain.screen.set_cursor(3,0)
-        brain.screen.clear_row()
-        brain.screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
+        Screen.set_cursor(3,0)
+        Screen.clear_row()
+        Screen.print(Flywheel.velocity(), intakeStatus, flywheelTargetRpm, startUp, Shutdown)
 
         ControllerGUI("Velocity", round(Flywheel.velocity()))
 
-        Controller1.screen.print(" ",flywheelTargetRpm)
+        Controller1.screen.print(" ", setSpeed)
 
         wait(100)
+
+def autonum():
+    global start_on_roller
+ 
+    auton_inititialization()
+    if start_on_roller:
+        roller_start()
+    else:
+        regular_start()
 
 def roller_start():
     roller()
@@ -402,24 +438,13 @@ def regular_start():
     LHDrive.spin_for(REVERSE, 120 , RotationUnits.DEG, 25, VelocityUnits.RPM, wait = False)
     RHDrive.spin_for(FORWARD, 120, RotationUnits.DEG, 25, VelocityUnits.RPM, wait = True)
     
-    locator()
+    refined_locator()
     logger(9, "Done", intakeStatus)
     intakeStatus = False
     flywheelShoot()
 
-
     flywheelShutdown()
 
     startUpRPM = temp_startUpRPM
-
-def autonum():
-    global start_on_roller
- 
-    auton_inititialization()
-    if start_on_roller:
-        roller_start:
-    else:
-        regular_start()
-
 
 comp = Competition(driver, autonum)
