@@ -19,7 +19,7 @@ from vex import *
 #  # # # # # # # # # # # # # # # # # #
 
 blue_team =  True
-start_on_roller = False
+start_on_roller = True
 
 offset = 8
 lowerBound = 147
@@ -35,13 +35,18 @@ prev_error = 0
 #   -Calibration
 #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-if blue_team:
-    opp_team = Color.RED 
-    team = Color.BLUE 
-    #Blue seen with sensor = Color("00FFFF")
-else:
-    opp_team = Color.BLUE # 
-    team =  Color.RED 
+
+def setColors():
+    global team, opp_team
+    if blue_team:
+        opp_team = Color(Color.RED)
+        team = Color(Color.BLUE)
+        #Blue seen with sensor = Color("00FFFF")
+    else:
+        opp_team = Color(Color.BLUE)
+        team =  Color(Color.RED)
+
+setColors()
 
 brain          = Brain()
 Screen         = brain.screen
@@ -94,6 +99,8 @@ Screen.print("Information: ")
 
 def initialization():  
     pneumatic.close()
+    opticSens.set_light(LedStateType.OFF)
+    setColors()
     
 def driver_initialization():
     global startUp
@@ -147,9 +154,12 @@ def buttonPressed():
     if Screen.x_position() > 100 and Screen.x_position() < 200 and Screen.y_position() > 100 and Screen.y_position() < 150: 
         logger(4,"Red", Screen.x_position())
         blue_team = False
+        setColors()
     if Screen.x_position() > 250 and Screen.x_position() < 350 and Screen.y_position() > 100 and Screen.y_position() < 150: 
         logger(5,"Blue", Screen.x_position())
         blue_team = True
+        setColors()
+    
 
 #Threading-------------------------------------------------------#
 def intakeControl():  #This is a intake control thread
@@ -184,19 +194,23 @@ def flywheelShutdown():
         wait(RPMDelay, SECONDS)
     Flywheel.spin(FORWARD, 0, VelocityUnits.RPM)
 
-def pid_control(target_rpm, current_rpm, Kp, Ki, Kd, dt):
-    global integral, prev_error
-    error = target_rpm - current_rpm
-    integral = integral + error * dt
-    derivative = (error - prev_error) / dt
-    output = Kp * error + Ki * integral + Kd * derivative
-    prev_error = error
-    return output
-
 def flywheelKeepSpeed():
+    internalRPM = Flywheel.velocity(RPM)
     global flywheelTargetRpm
+    #while internalRPM > flywheelTargetRpm + 10 or internalRPM < flywheelTargetRpm - 10:
     if startUp == True and Shutdown == False:
-        Flywheel.set_velocity(pid_control(flywheelTargetRpm,Flywheel.velocity(),1,0.1,0.1,0.01), VelocityUnits.RPM)
+        if internalRPM < flywheelTargetRpm:
+            internalRPM = internalRPM + RPMIncrement
+            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            brain.screen.set_cursor(2,0)
+            brain.screen.clear_line()
+            brain.screen.print("go up")
+        else:
+            internalRPM = internalRPM - RPMIncrement/2
+            Flywheel.spin(FORWARD, internalRPM, VelocityUnits.RPM)
+            brain.screen.set_cursor(2,0)
+            brain.screen.clear_line()
+            brain.screen.print("go down")
         
 
 def changeFlywheelSpeedDecrease():
@@ -228,14 +242,14 @@ def pneumaticRelease():
 #Speed Settings-------------------------------------------#
 def changeSpeedDown():
     global setSpeed
-    if setSpeed >= 1:
-        setSpeed += 1
+    if setSpeed > 1:
+        setSpeed -= 1
     ControllerGUI("Speed", setSpeed)
 
 def changeSpeedUp():
     global setSpeed
-    if setSpeed <= 4:
-        setSpeed -= 1
+    if setSpeed < 4:
+        setSpeed += 1
     ControllerGUI("Speed", setSpeed)
 #Moving the motors----------------------------------------#
 
@@ -260,7 +274,7 @@ def flywheelShoot():
         Intake.stop()
 
 def driver_locator():
-    refined_locator()
+    locator()
 
 # #Autonum Controls------------------------------------------------------------------#
 #
@@ -272,19 +286,23 @@ def driver_locator():
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 def roller():
     global opp_team, team, intakeSpeed
+    opticSens.set_light(LedStateType.ON)
+    opticSens.set_light_power(100)
+    wait(500, MSEC)
     opticColor = opticSens.color() 
     
-
-    if opticColor == opp_team:
+    if opticColor == team:
+        print("CALLED")
         Intake.spin(FORWARD, intakeSpeed, RPM)   
 
     Screen.set_cursor(9,0)
     Screen.clear_line()
     Screen.print("Color ", opticColor, opp_team, team)
 
-    if opticColor == team:
+    if opticColor == opp_team:
         # CHANGE TO NOT INTERFERE WITH INDEXER
         Intake.stop()
+        opticSens.set_light(LedStateType.OFF)
     wait(50)
 def refined_locator():
     i = 0
@@ -327,7 +345,7 @@ def locator():
             x = visionSens.take_snapshot(BlueSignature)
         else:
             x = visionSens.take_snapshot(RedSignature)
-        logger(5, "Did it detect?", x)
+        logger(5, "What it saw", x)
         if x != None:
             logger(10, "Camera", x)
             if x[0].centerX+offset < lowerBound:
@@ -365,9 +383,9 @@ def driver():
     Controller1.buttonDown.pressed(changeSpeedDown)
     Controller1.buttonUp.pressed(changeSpeedUp)  
     #BUTTON TO TEST AUTONUM IN DRIVE MODE
-    Controller1.buttonB.pressed(roller)
+    Controller1.buttonX.pressed(roller)
     Controller1.buttonY.pressed(driver_locator)
-    Controller1.buttonX.pressed(pneumaticRelease)
+    Controller1.buttonB.pressed(pneumaticRelease)
     #Flywheel Speed Change
     Controller1.buttonLeft.pressed(changeFlywheelSpeedDecrease) 
     Controller1.buttonRight.pressed(changeFlywheelSpeedIncrease)
@@ -399,7 +417,6 @@ def driver():
 
 def autonum():
     global start_on_roller
- 
     auton_inititialization()
     if start_on_roller:
         roller_start()
@@ -408,6 +425,10 @@ def autonum():
 
 def roller_start():
     roller()
+    LHDrive.spin_for(FORWARD, 25, DEGREES, 10, RPM, False)
+    RHDrive.spin_for(FORWARD, 25, DEGREES, 10, RPM, False)
+    while True:
+        roller()
     
 def regular_start():
     # 10.21 # Measurement in INCHES
